@@ -14,7 +14,6 @@ $elastic_cloud_plan = Get-Content -Raw $elastic_cloud_plan_template | ConvertFro
 $elastic_cloud_plan.name = $cluster_name
 $elastic_cloud_plan.resources[0].elasticsearch[0].plan.elasticsearch.version = $stack_version
 $elastic_cloud_plan.resources[0].kibana[0].plan.kibana.version = $stack_version
-
 $elastic_cloud_plan.resources[0].elasticsearch[0].region = $elastic_cloud_target_region
 
 $cluster_info = Invoke-RestMethod -Method Post -Uri "$elastic_cloud_api_uri" `
@@ -24,8 +23,6 @@ $cluster_info = Invoke-RestMethod -Method Post -Uri "$elastic_cloud_api_uri" `
 $cluster_id = $cluster_info.id 
 $cloud_id = $cluster_info.resources.cloud_id
 $password = $cluster_info.resources.credentials.password
-
-Add-Content $credentials_file_path "Elasticsearch URL: $cluster.resources[0].elasticsearch[0].info.metadata.endpoint"
 
 do {
     Start-Sleep -Seconds 5
