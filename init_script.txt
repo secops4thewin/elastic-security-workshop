@@ -1,0 +1,24 @@
+<powershell>
+$cluster_name = 'my-workshop-name'
+$target_gcp_region = 'gcp-australia-southeast1'
+$stack_version = '7.7.0'
+$api_key = 'xxxxx'
+$snapshot_name = 'cloud-snapshot-abc'
+$snapshot_src_cluster_id = '1234'
+
+
+$logfile = "c:\Elastic\create_elastic_cloud_cluster.log"
+Set-ExecutionPolicy Unrestricted
+$params = $('-api_key', $api_key, `
+            '-target_gcp_region', $target_gcp_region, `
+            '-stack_version', $stack_version,`
+            '-cluster_name', $cluster_name, `
+            '-snapshot_name', $snapshot_name, `
+            '-snapshot_src_cluster_id', $snapshot_src_cluster_id)
+try {
+    & “C:\Elastic\create_elastic_cloud_cluster.ps1" @params | Out-File $logfile
+}
+catch {
+   $_.Exception.Message | Out-File $logfile -Append
+}
+</powershell>
