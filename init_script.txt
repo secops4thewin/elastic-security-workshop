@@ -6,7 +6,6 @@ $api_key = 'xxxxx'
 $snapshot_name = 'cloud-snapshot-abc'
 $snapshot_src_cluster_id = '1234'
 
-
 $logfile = "c:\Elastic\create_elastic_cloud_cluster.log"
 Set-ExecutionPolicy Unrestricted
 $params = $($api_key, `
