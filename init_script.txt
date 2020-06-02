@@ -9,12 +9,12 @@ $snapshot_src_cluster_id = '1234'
 
 $logfile = "c:\Elastic\create_elastic_cloud_cluster.log"
 Set-ExecutionPolicy Unrestricted
-$params = $('-api_key', $api_key, `
-            '-target_gcp_region', $target_gcp_region, `
-            '-stack_version', $stack_version,`
-            '-cluster_name', $cluster_name, `
-            '-snapshot_name', $snapshot_name, `
-            '-snapshot_src_cluster_id', $snapshot_src_cluster_id)
+$params = $($api_key, `
+            $target_gcp_region, `
+            $cluster_name, `
+            $stack_version,`
+            $snapshot_name, `
+            $snapshot_src_cluster_id)
 try {
     & “C:\Elastic\create_elastic_cloud_cluster.ps1" @params | Out-File $logfile
 }
