@@ -32,7 +32,7 @@ $cluster_id = $cluster_info.id
 $cloud_id = $cluster_info.resources.cloud_id
 $password = $cluster_info.resources.credentials.password
 
-Write-Host -NoNewLine "Elastic Cloud Deployment [$cluster_id] is being created"
+Write-Output "Elastic Cloud Deployment [$cluster_id] is being created"
 do {
     Start-Sleep -Seconds 10
     $cluster = (Invoke-RestMethod -Method Get -Uri $elastic_cloud_api_uri/$cluster_id `
@@ -41,7 +41,7 @@ do {
     Write-Host -NoNewLine "."
 }
 until ($healthy -eq $True)
-Write-Host "done"
+Write-Output "done"
 
 $kibana_url = $cluster.resources.kibana.info.metadata.endpoint
 $elasticsearch_url = $cluster.resources[0].elasticsearch[0].info.metadata.endpoint
@@ -57,26 +57,28 @@ Add-Content $credentials_file_path "Password: $password"
 #Configure Beats
 function ElasticBeatSetup ([string]$beat_name)
 {
-    Write-Host "Setting up $beat_name"
-    $beat_exe_path = "C:\Program Files\Elastic\Beats\$stack_version\$beat_name\$beat_name.exe"
+    Write-Output "Setting up $beat_name"
+    $beat_install_folder = "C:\Program Files\Elastic\Beats\$stack_version\$beat_name"
+    $beat_exe_path = "$beat_install_folder\$beat_name.exe"
     $beat_config_path = "C:\ProgramData\Elastic\Beats\$beat_name\$beat_name.yml"
+    $beat_data_path = "C:\ProgramData\Elastic\Beats\$beat_name\data"
 
     # Create Beat Keystore and add CLOUD_ID and ES_PWD keys to it
     $params = $('-c', $beat_config_path, 'keystore','create','--force')
-    & $beat_exe_path $params
-    $params = $('-c', $beat_config_path, 'keystore','add','CLOUD_ID','--stdin','--force')
-    Write-Output $cloud_id | & $beat_exe_path $params
-    $params = $('-c', $beat_config_path, 'keystore','add','ES_PWD','--stdin','--force')
-    Write-Output $password | & $beat_exe_path $params
+    & $beat_exe_path @params
+    $params = $('-c', $beat_config_path, 'keystore','add','CLOUD_ID','--stdin','--force','-path.data', $beat_data_path)
+    Write-Output $cloud_id | & $beat_exe_path @params
+    $params = $('-c', $beat_config_path, 'keystore','add','ES_PWD','--stdin','--force','-path.data', $beat_data_path)
+    Write-Output $password | & $beat_exe_path @params
     
     # Run Beat Setup
     $params = $('-c', $beat_config_path, 'setup')
-    & $beat_exe_path $params
+    #& $beat_exe_path @params
     
-    Write-Host "Starting $beat_name Service"
-    Start-Service -Name $beat_name
+    Write-Output "Starting $beat_name Service"
+    #Start-Service -Name $beat_name
 }
 ElasticBeatSetup("winlogbeat");
 ElasticBeatSetup("packetbeat");
 
-Write-Host "Cluster was successfully created"
+Write-Output "Cluster was successfully created"
