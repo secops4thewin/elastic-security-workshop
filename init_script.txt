@@ -14,6 +14,7 @@ $SrcUri = "https://github.com/mrebeschini/elastic-security-workshop/blob/master/
 $HomeDir = "C:\Elastic\"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 Invoke-WebRequest -Uri "$SrcUri/create_elastic_cloud_cluster.ps1" -OutFile "$HomeDir\create_elastic_cloud_cluster.ps1"
+Remove-Item C:\Users\Administrator\Desktop\cluster.txt
 
 $params = $($api_key, `
             $target_gcp_region, `
