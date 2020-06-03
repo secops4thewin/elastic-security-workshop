@@ -41,7 +41,7 @@ do {
     Write-Host -NoNewLine "."
 }
 until ($healthy -eq $True)
-Write-Output "done"
+Write-Output "Success!"
 
 $kibana_url = $cluster.resources.kibana.info.metadata.endpoint
 $elasticsearch_url = $cluster.resources[0].elasticsearch[0].info.metadata.endpoint
@@ -57,7 +57,7 @@ Add-Content $credentials_file_path "Password: $password"
 #Configure Beats
 function ElasticBeatSetup ([string]$beat_name)
 {
-    Write-Output "Setting up $beat_name"
+    Write-Output "\n*** Setting up $beat_name ****"
     $beat_install_folder = "C:\Program Files\Elastic\Beats\$stack_version\$beat_name"
     $beat_exe_path = "$beat_install_folder\$beat_name.exe"
     $beat_config_path = "C:\ProgramData\Elastic\Beats\$beat_name\$beat_name.yml"
@@ -73,10 +73,10 @@ function ElasticBeatSetup ([string]$beat_name)
     
     # Run Beat Setup
     $params = $('-c', $beat_config_path, 'setup')
-    #& $beat_exe_path @params
+    & $beat_exe_path @params
     
     Write-Output "Starting $beat_name Service"
-    #Start-Service -Name $beat_name
+    Start-Service -Name $beat_name
 }
 ElasticBeatSetup("winlogbeat");
 ElasticBeatSetup("packetbeat");
