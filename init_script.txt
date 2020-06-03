@@ -1,4 +1,5 @@
 <powershell>
+
 $cluster_name = 'my-workshop-name'
 $target_gcp_region = 'gcp-australia-southeast1'
 $stack_version = '7.7.0'
@@ -8,6 +9,12 @@ $snapshot_src_cluster_id = '1234'
 
 $logfile = "c:\Elastic\create_elastic_cloud_cluster.log"
 Set-ExecutionPolicy Unrestricted
+
+$SrcUri = "https://github.com/mrebeschini/elastic-security-workshop/blob/master/"
+$HomeDir = "C:\Elastic\"
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+Invoke-WebRequest -Uri "$SrcUri/create_elastic_cloud_cluster.ps1" -OutFile "$HomeDir\create_elastic_cloud_cluster.ps1"
+
 $params = $($api_key, `
             $target_gcp_region, `
             $cluster_name, `
