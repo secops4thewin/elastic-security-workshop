@@ -44,7 +44,7 @@ do {
     Write-Host -NoNewLine "."
 }
 until ($healthy -eq $True)
-Write-Output "Elastic Cloud Deployment was created successfully!"
+Write-Output "`nElastic Cloud Deployment was created successfully!"
 
 $kibana_url = $cluster.resources.kibana.info.metadata.endpoint
 $elasticsearch_url = $cluster.resources[0].elasticsearch[0].info.metadata.endpoint
@@ -110,4 +110,4 @@ ElasticBeatSetup("winlogbeat");
 ElasticBeatSetup("packetbeat");
 ElasticBeatSetup("metricbeat");
 
-Write-Output "`nCluster was successfully created"
+Write-Output "`nSetup complete!"
