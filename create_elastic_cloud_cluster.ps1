@@ -7,6 +7,16 @@
     [string]$snapshot_src_cluster_id
  )
 
+if (!(test-path $install_dir))
+{
+    New-Item -ItemType Directory -Path $install_dir
+}
+
+#Download Elastic Cloud Deployment Plan
+Write-Output "Downloading Elastic Cloud Deployment Plan..."
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+Invoke-WebRequest -Uri "$beat_config_repository_uri/wsplan.json" -OutFile "$install_dir\wsplan.json"    
+
 $date = (Get-Date).ToString('yyyy-MM-dd')
 $install_dir = "C:\Elastic"
 $cluster_name = "$date $cluster_name"
