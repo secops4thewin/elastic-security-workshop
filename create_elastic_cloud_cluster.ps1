@@ -7,9 +7,12 @@
     [string]$snapshot_src_cluster_id
  )
 
+$date = (Get-Date).ToString('yyyy-MM-dd')
+$cluster_name = "$date`_$cluster_name"
 $elastic_cloud_api_uri = "https://api.elastic-cloud.com/api/v1/deployments"
 $elastic_cloud_plan_template = "C:\Elastic\wsplan.json"
 $credentials_file_path = "C:\Users\Administrator\Desktop\cluster.txt"
+$beat_config_repository_uri = "https://raw.githubusercontent.com/mrebeschini/elastic-security-workshop/master/"
 
 #Update Elastic Cloud Plan based on command line parameters
 $elastic_cloud_plan = Get-Content -Raw $elastic_cloud_plan_template | ConvertFrom-JSON
@@ -41,7 +44,7 @@ do {
     Write-Host -NoNewLine "."
 }
 until ($healthy -eq $True)
-Write-Output "Success!"
+Write-Output "Elastic Cloud Deployment was created successfully!"
 
 $kibana_url = $cluster.resources.kibana.info.metadata.endpoint
 $elasticsearch_url = $cluster.resources[0].elasticsearch[0].info.metadata.endpoint
@@ -54,14 +57,38 @@ Add-Content $credentials_file_path "Cloud ID: $cloud_id"
 Add-Content $credentials_file_path "Username: elastic"
 Add-Content $credentials_file_path "Password: $password"
 
+Uninstall all Elastic Beats already installed
+$app = Get-WmiObject -Class Win32_Product -Filter ("Vendor = 'Elastic'")
+if ($null -ne $app) {
+    $app.Uninstall()
+}
+
 #Configure Beats
 function ElasticBeatSetup ([string]$beat_name)
 {
-    Write-Output "\n*** Setting up $beat_name ****"
+    Write-Output "`n*** Setting up $beat_name ****"
     $beat_install_folder = "C:\Program Files\Elastic\Beats\$stack_version\$beat_name"
     $beat_exe_path = "$beat_install_folder\$beat_name.exe"
     $beat_config_path = "C:\ProgramData\Elastic\Beats\$beat_name\$beat_name.yml"
     $beat_data_path = "C:\ProgramData\Elastic\Beats\$beat_name\data"
+    $beat_config_file = "$beat_config_repository_url/$beatname.yml"
+    $beat_artifact_uri = "https://artifacts.elastic.co/downloads/beats/$beat_name/$beat_name-$stack_version-windows-x86_64.msi"
+
+    Write-Output "Installing $beat_name..."
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    Invoke-WebRequest -Uri "$beat_artifact_uri" -OutFile "$download_dir\$beat_name-$stack_version-windows-x86_64.msi"
+    $MSIArguments = @(
+        "/i"
+        "$download_dir\$beat_name-$stack_version-windows-x86_64.msi"
+        "/qn"
+        "/norestart"
+        "/L"
+        $logFile
+    )
+    Start-Process msiexec.exe -Wait -ArgumentList $MSIArguments -NoNewWindow
+
+    #Download Beat configuration file
+    Invoke-WebRequest -Uri "$beat_config_repository_uri/$beat_name.yml" -OutFile $beat_config_path
 
     # Create Beat Keystore and add CLOUD_ID and ES_PWD keys to it
     $params = $('-c', $beat_config_path, 'keystore','create','--force')
@@ -72,13 +99,15 @@ function ElasticBeatSetup ([string]$beat_name)
     Write-Output $password | & $beat_exe_path @params
     
     # Run Beat Setup
-    $params = $('-c', $beat_config_path, 'setup')
+    Write-Output "Running $beat_name setup..."
+    $params = $('-c', $beat_config_path, 'setup', '-path.data', $beat_data_path)
     & $beat_exe_path @params
-    
+
     Write-Output "Starting $beat_name Service"
     Start-Service -Name $beat_name
 }
 ElasticBeatSetup("winlogbeat");
 ElasticBeatSetup("packetbeat");
+ElasticBeatSetup("metricbeat");
 
-Write-Output "Cluster was successfully created"
+Write-Output "`nCluster was successfully created"
