@@ -1,0 +1,93 @@
+{
+  "name": "",
+  "metadata": {
+    "system_owned": false
+  },
+  "resources": {
+    "elasticsearch": [
+      {
+        "region": "gcp-australia-southeast1",
+        "ref_id": "main-elasticsearch",
+        "plan": {
+          "cluster_topology": [
+            {
+              "node_type": {
+                "data": true,
+                "master": true,
+                "ingest": true
+              },
+              "instance_configuration_id": "gcp.data.highio.1",
+              "zone_count": 2,
+              "size": {
+                "resource": "memory",
+                "value": 8192
+              },
+              "elasticsearch": {
+                "enabled_built_in_plugins": [
+                  "mapper-size"
+                ]
+              }
+            },
+            {
+              "node_type": {
+                "data": false,
+                "master": false,
+                "ingest": false,
+                "ml": true
+              },
+              "instance_configuration_id": "gcp.ml.1",
+              "zone_count": 2,
+              "size": {
+                "resource": "memory",
+                "value": 8192
+              },
+              "elasticsearch": {
+                "enabled_built_in_plugins": [
+                  "mapper-size"
+                ]
+              }
+            }
+          ],
+          "elasticsearch": {
+            "version": "7.7.0"
+          },
+          "deployment_template": {
+            "id": "gcp-io-optimized"
+          },
+          "transient": {
+            "restore_snapshot": {
+              "snapshot_name": "cloud-snapshot-2020.05.24-dt-mjypctigylv67uy7ogw",
+              "source_cluster_id": "41e04bd9d4fb482c827c0dfbf03e1f47"
+            }
+          }
+        },
+        "settings": {
+          "dedicated_masters_threshold": 6
+        }
+      }
+    ],
+    "kibana": [
+      {
+        "region": "gcp-australia-southeast1",
+        "elasticsearch_cluster_ref_id": "main-elasticsearch",
+        "ref_id": "main-kibana",
+        "plan": {
+          "cluster_topology": [
+            {
+              "instance_configuration_id": "gcp.kibana.1",
+              "zone_count": 1,
+              "size": {
+                "resource": "memory",
+                "value": 8192
+              }
+            }
+          ],
+          "kibana": {
+            "version": "7.7.0"
+          }
+        }
+      }
+    ],
+    "apm": []
+  }
+}
