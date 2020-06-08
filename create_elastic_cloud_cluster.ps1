@@ -7,6 +7,14 @@
     [string]$snapshot_src_cluster_id
  )
 
+$date = (Get-Date).ToString('yyyy-MM-dd')
+$install_dir = "C:\Elastic"
+$cluster_name = "$date $cluster_name"
+$elastic_cloud_api_uri = "https://api.elastic-cloud.com/api/v1/deployments"
+$elastic_cloud_plan_template = "$install_dir\wsplan.json"
+$credentials_file_path = "C:\Users\Administrator\Desktop\cluster.txt"
+$beat_config_repository_uri = "https://raw.githubusercontent.com/mrebeschini/elastic-security-workshop/v1.0/"
+
 if (!(test-path $install_dir))
 {
     New-Item -ItemType Directory -Path $install_dir
@@ -16,14 +24,6 @@ if (!(test-path $install_dir))
 Write-Output "Downloading Elastic Cloud Deployment Plan..."
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 Invoke-WebRequest -Uri "$beat_config_repository_uri/wsplan.json" -OutFile "$install_dir\wsplan.json"    
-
-$date = (Get-Date).ToString('yyyy-MM-dd')
-$install_dir = "C:\Elastic"
-$cluster_name = "$date $cluster_name"
-$elastic_cloud_api_uri = "https://api.elastic-cloud.com/api/v1/deployments"
-$elastic_cloud_plan_template = "$install_dir\wsplan.json"
-$credentials_file_path = "C:\Users\Administrator\Desktop\cluster.txt"
-$beat_config_repository_uri = "https://raw.githubusercontent.com/mrebeschini/elastic-security-workshop/v1.0/"
 
 #Update Elastic Cloud Plan based on command line parameters
 $elastic_cloud_plan = Get-Content -Raw $elastic_cloud_plan_template | ConvertFrom-JSON
