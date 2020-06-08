@@ -1,5 +1,3 @@
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
- 
 param (
     [string]$api_key = $(throw "-api_key is required."),
     [string]$target_gcp_region = $(throw "-target_gcp_region is required."),
@@ -7,7 +5,7 @@ param (
     [string]$stack_version = $(throw "-stack_version is required."),
     [string]$snapshot_name,
     [string]$snapshot_src_cluster_id
- )
+)
 
 $date = (Get-Date).ToString('yyyy-MM-dd')
 $install_dir = "C:\Elastic"
@@ -18,6 +16,7 @@ $credentials_file_path = "C:\Users\Administrator\Desktop\cluster.txt"
 $beat_config_repository_uri = "https://raw.githubusercontent.com/mrebeschini/elastic-security-workshop/v1.0/"
 
 #Install Sysmon
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $sysmon_installer_uri = "https://download.sysinternals.com/files/Sysmon.zip"
 $sysmon_config_uri = "https://raw.githubusercontent.com/olafhartong/sysmon-configs/master/sysmonconfig-v10.xml"
 $sysmon_local_rules_filepath = "C:\Windows\sysmon.xml"
