@@ -19,7 +19,7 @@ $beat_config_repository_uri = "https://raw.githubusercontent.com/mrebeschini/ela
 
 if (!(Test-Path $install_dir))
 {
-    New-Item -ItemType Directory -Path $install_dir
+    New-Item -ItemType Directory -Path $install_dir | Out-Null
 }
 
 #Install Sysmon
@@ -34,7 +34,7 @@ if (Test-Path "C:\Windows\Sysmon64.exe")
 Write-Host "Installing Sysmon..."
 $sysmon_tmp_dir = "$install_dir\sysmon"
 if (!(Test-Path $sysmon_tmp_dir)) {
-    New-Item -Path $sysmon_tmp_dir -Type directory
+    New-Item -Path $sysmon_tmp_dir -Type directory | Out-Null
 }
 Invoke-WebRequest -Uri $sysmon_config_uri -OutFile $sysmon_local_rules_filepath
 Invoke-WebRequest -Uri $sysmon_installer_uri -OutFile $sysmon_tmp_dir/Sysmon.zip
@@ -94,7 +94,7 @@ Add-Content $credentials_file_path "Password: $password"
 $app = Get-WmiObject -Class Win32_Product -Filter ("Vendor = 'Elastic'")
 if ($null -ne $app) {
     Write-Output "Uninstalling exising Elastic Beats..."
-    $app.Uninstall()
+    $app.Uninstall() | Out-Null
 }
 
 #Configure Beats
