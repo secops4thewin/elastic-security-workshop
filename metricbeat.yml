@@ -1,4 +1,3 @@
-  
 cloud.id: "${CLOUD_ID}"
 cloud.auth: "elastic:${CLOUD_AUTH}"
 
@@ -10,6 +9,8 @@ setup.template.settings:
   index.number_of_shards: 1
   index.number_of_replicas: 1
   index.codec: best_compression
+
+output.elasticsearch:
 
 processors:
   - add_host_metadata:
