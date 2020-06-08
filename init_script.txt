@@ -12,7 +12,7 @@ Set-ExecutionPolicy Unrestricted
 $SrcUri = "https://raw.githubusercontent.com/mrebeschini/elastic-security-workshop/v1.0/"
 $HomeDir = "C:\Elastic\"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-Invoke-WebRequest -Uri "$SrcUri/create_elastic_cloud_cluster.ps1" -OutFile "$HomeDir\create_elastic_cloud_cluster.ps1"
+Invoke-WebRequest -Uri "$SrcUri/create_security_workshop_environment.ps1" -OutFile "$HomeDir\create_security_workshop_environment.ps1"
 Remove-Item C:\Users\Administrator\Desktop\cluster.txt
 
 $params = $($api_key, `
