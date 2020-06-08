@@ -1,6 +1,3 @@
-cloud.id: "${CLOUD_ID}"
-cloud.auth: "elastic:${ES_PWD}"
-
 packetbeat.interfaces.device: 0
 packetbeat.flows:
   timeout: 30s
@@ -50,5 +47,8 @@ processors:
 
 output.elasticsearch:
   pipeline: geoip-info
+
+cloud.id: "${CLOUD_ID}"
+cloud.auth: "elastic:${ES_PWD}"
 
 xpack.monitoring.enabled: true
