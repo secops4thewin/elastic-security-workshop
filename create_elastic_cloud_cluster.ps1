@@ -57,7 +57,7 @@ Add-Content $credentials_file_path "Cloud ID: $cloud_id"
 Add-Content $credentials_file_path "Username: elastic"
 Add-Content $credentials_file_path "Password: $password"
 
-Uninstall all Elastic Beats already installed
+#Uninstall all Elastic Beats already installed
 $app = Get-WmiObject -Class Win32_Product -Filter ("Vendor = 'Elastic'")
 if ($null -ne $app) {
     $app.Uninstall()
