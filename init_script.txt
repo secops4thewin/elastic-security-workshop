@@ -30,7 +30,7 @@ $params = $($api_key, `
             $snapshot_name, `
             $snapshot_src_cluster_id)
 try {
-    & “$install_dir\security_workshop_setup.ps1" @params | Out-File $logfile
+    & "$install_dir\security_workshop_setup.ps1" @params | Out-File $logfile
 }
 catch {
    $_.Exception.Message | Out-File $logfile -Append
