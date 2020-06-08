@@ -8,7 +8,7 @@
  )
 
 $date = (Get-Date).ToString('yyyy-MM-dd')
-$cluster_name = "$date`_$cluster_name"
+$cluster_name = "$date $cluster_name"
 $elastic_cloud_api_uri = "https://api.elastic-cloud.com/api/v1/deployments"
 $elastic_cloud_plan_template = "C:\Elastic\wsplan.json"
 $credentials_file_path = "C:\Users\Administrator\Desktop\cluster.txt"
