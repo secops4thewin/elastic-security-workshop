@@ -17,11 +17,6 @@ $elastic_cloud_plan_template = "$install_dir\wsplan.json"
 $credentials_file_path = "C:\Users\Administrator\Desktop\cluster.txt"
 $beat_config_repository_uri = "https://raw.githubusercontent.com/mrebeschini/elastic-security-workshop/v1.0/"
 
-if (!(Test-Path $install_dir))
-{
-    New-Item -ItemType Directory -Path $install_dir | Out-Null
-}
-
 #Install Sysmon
 $sysmon_installer_uri = "https://download.sysinternals.com/files/Sysmon.zip"
 $sysmon_config_uri = "https://raw.githubusercontent.com/olafhartong/sysmon-configs/master/sysmonconfig-v10.xml"
