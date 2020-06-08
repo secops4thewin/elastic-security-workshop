@@ -2,7 +2,7 @@
 
 $cluster_name = 'my-workshop-name'
 $target_gcp_region = 'gcp-australia-southeast1'
-$stack_version = '7.7.0'
+$stack_version = '7.7.1'
 $api_key = 'xxxxx'
 $snapshot_name = 'cloud-snapshot-abc'
 $snapshot_src_cluster_id = '1234'
