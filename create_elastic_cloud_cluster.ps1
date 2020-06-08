@@ -13,7 +13,7 @@ $cluster_name = "$date $cluster_name"
 $elastic_cloud_api_uri = "https://api.elastic-cloud.com/api/v1/deployments"
 $elastic_cloud_plan_template = "$install_dir\wsplan.json"
 $credentials_file_path = "C:\Users\Administrator\Desktop\cluster.txt"
-$beat_config_repository_uri = "https://raw.githubusercontent.com/mrebeschini/elastic-security-workshop/https://raw.githubusercontent.com/mrebeschini/elastic-security-workshop/v1.0/"
+$beat_config_repository_uri = "https://raw.githubusercontent.com/mrebeschini/elastic-security-workshop/v1.0/"
 
 #Update Elastic Cloud Plan based on command line parameters
 $elastic_cloud_plan = Get-Content -Raw $elastic_cloud_plan_template | ConvertFrom-JSON
