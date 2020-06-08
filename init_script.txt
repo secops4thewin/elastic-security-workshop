@@ -1,19 +1,22 @@
 <powershell>
-$cluster_name = 'my-workshop-name'
+$cluster_name = 'APAC Security Workshop'
 $target_gcp_region = 'gcp-australia-southeast1'
-$stack_version = '7.7.0'
+$stack_version = '7.7.1'
 $api_key = 'xxxxx'
-$snapshot_name = 'cloud-snapshot-yyyyy'
-$snapshot_src_cluster_id = 'zzzzz'
+$snapshot_name = 'cloud-snapshot-abc'
+$snapshot_src_cluster_id = '1234'
 
-$logfile = "c:\Elastic\create_elastic_cloud_cluster.log"
 Set-ExecutionPolicy Unrestricted
-
+$logfile = "c:\Elastic\security_workshop_setup.log"
 $SrcUri = "https://raw.githubusercontent.com/mrebeschini/elastic-security-workshop/v1.0/"
 $HomeDir = "C:\Elastic\"
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-Invoke-WebRequest -Uri "$SrcUri/create_security_workshop_environment.ps1" -OutFile "$HomeDir\create_security_workshop_environment.ps1"
+
+#The following two commands can be removed once AMI is updated
 Remove-Item C:\Users\Administrator\Desktop\cluster.txt
+Remove-Item -Path $HomeDir -Recurse -Force
+
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+Invoke-WebRequest -Uri "$SrcUri/security_workshop_setup.ps1" -OutFile "$HomeDir\security_workshop_setup.ps1"
 
 $params = $($api_key, `
             $target_gcp_region, `
@@ -22,7 +25,7 @@ $params = $($api_key, `
             $snapshot_name, `
             $snapshot_src_cluster_id)
 try {
-    & “C:\Elastic\create_elastic_cloud_cluster.ps1" @params | Out-File $logfile
+    & “C:\Elastic\security_workshop_setup.ps1" @params | Out-File $logfile
 }
 catch {
    $_.Exception.Message | Out-File $logfile -Append
