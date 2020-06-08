@@ -1,4 +1,6 @@
- param (
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+ 
+param (
     [string]$api_key = $(throw "-api_key is required."),
     [string]$target_gcp_region = $(throw "-target_gcp_region is required."),
     [string]$cluster_name = $(throw "-cluster_name is required."),
@@ -15,14 +17,34 @@ $elastic_cloud_plan_template = "$install_dir\wsplan.json"
 $credentials_file_path = "C:\Users\Administrator\Desktop\cluster.txt"
 $beat_config_repository_uri = "https://raw.githubusercontent.com/mrebeschini/elastic-security-workshop/v1.0/"
 
-if (!(test-path $install_dir))
+if (!(Test-Path $install_dir))
 {
     New-Item -ItemType Directory -Path $install_dir
 }
 
+#Install Sysmon
+$sysmon_installer_uri = "https://download.sysinternals.com/files/Sysmon.zip"
+$sysmon_config_uri = "https://raw.githubusercontent.com/olafhartong/sysmon-configs/master/sysmonconfig-v10.xml"
+$sysmon_local_rules_filepath = "C:\Windows\sysmon.xml"
+if (Test-Path "C:\Windows\Sysmon64.exe")
+{
+    Write-Host "Unistalling Sysmon..."
+    Start-Process -WorkingDirectory "C:\Windows" -FilePath "sysmon64" -ArgumentList "-u" -Wait -NoNewWindow
+}
+Write-Host "Installing Sysmon..."
+$sysmon_tmp_dir = "$install_dir\sysmon"
+if (!(Test-Path $sysmon_tmp_dir)) {
+    New-Item -Path $sysmon_tmp_dir -Type directory
+}
+Invoke-WebRequest -Uri $sysmon_config_uri -OutFile $sysmon_local_rules_filepath
+Invoke-WebRequest -Uri $sysmon_installer_uri -OutFile $sysmon_tmp_dir/Sysmon.zip
+Expand-Archive -Path $sysmon_tmp_dir/Sysmon.zip -DestinationPath $sysmon_tmp_dir
+Start-Process -WorkingDirectory $sysmon_tmp_dir -FilePath "sysmon64" -ArgumentList "-accepteula -i $sysmon_local_rules_filepath" -Wait -NoNewWindow
+Remove-Item -Path $sysmon_tmp_dir -Recurse -Force
+Write-Host "Sysmon Installation Complete"
+
 #Download Elastic Cloud Deployment Plan
-Write-Output "Downloading Elastic Cloud Deployment Plan..."
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+Write-Output "`nDownloading Elastic Cloud Deployment Plan..."
 Invoke-WebRequest -Uri "$beat_config_repository_uri/wsplan.json" -OutFile "$install_dir\wsplan.json"    
 
 #Update Elastic Cloud Plan based on command line parameters
@@ -88,7 +110,6 @@ function ElasticBeatSetup ([string]$beat_name)
     $log_file_path = "$install_dir\$beat_name.log"
 
     Write-Output "Installing $beat_name..."
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     Invoke-WebRequest -Uri "$beat_artifact_uri" -OutFile "$install_dir\$beat_name-$stack_version-windows-x86_64.msi"
     $MSIArguments = @(
         "/i"
