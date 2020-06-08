@@ -1,3 +1,6 @@
+cloud.id: "${CLOUD_ID}"
+cloud.auth: "elastic:${ES_PWD}"
+
 winlogbeat.event_logs:
   - name: Application
     ignore_older: 72h
@@ -31,6 +34,3 @@ output.elasticsearch:
   pipeline: windows_geo_mitre
 
 xpack.monitoring.enabled: true
-
-cloud.id: "${CLOUD_ID}"
-cloud.auth: "elastic:${ES_PWD}"
