@@ -8,9 +8,10 @@
  )
 
 $date = (Get-Date).ToString('yyyy-MM-dd')
+$install_dir = "C:\Elastic"
 $cluster_name = "$date $cluster_name"
 $elastic_cloud_api_uri = "https://api.elastic-cloud.com/api/v1/deployments"
-$elastic_cloud_plan_template = "C:\Elastic\wsplan.json"
+$elastic_cloud_plan_template = "$install_dir\wsplan.json"
 $credentials_file_path = "C:\Users\Administrator\Desktop\cluster.txt"
 $beat_config_repository_uri = "https://raw.githubusercontent.com/mrebeschini/elastic-security-workshop/https://raw.githubusercontent.com/mrebeschini/elastic-security-workshop/v1.0/"
 
@@ -60,6 +61,7 @@ Add-Content $credentials_file_path "Password: $password"
 #Uninstall all Elastic Beats already installed
 $app = Get-WmiObject -Class Win32_Product -Filter ("Vendor = 'Elastic'")
 if ($null -ne $app) {
+    Write-Output "Uninstalling exising Elastic Beats..."
     $app.Uninstall()
 }
 
@@ -73,13 +75,14 @@ function ElasticBeatSetup ([string]$beat_name)
     $beat_data_path = "C:\ProgramData\Elastic\Beats\$beat_name\data"
     $beat_config_file = "$beat_config_repository_url/$beatname.yml"
     $beat_artifact_uri = "https://artifacts.elastic.co/downloads/beats/$beat_name/$beat_name-$stack_version-windows-x86_64.msi"
+    $log_dir = "$install_dir\$beat_name.log"
 
     Write-Output "Installing $beat_name..."
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    Invoke-WebRequest -Uri "$beat_artifact_uri" -OutFile "$download_dir\$beat_name-$stack_version-windows-x86_64.msi"
+    Invoke-WebRequest -Uri "$beat_artifact_uri" -OutFile "$install_dir\$beat_name-$stack_version-windows-x86_64.msi"
     $MSIArguments = @(
         "/i"
-        "$download_dir\$beat_name-$stack_version-windows-x86_64.msi"
+        "$install_dir\$beat_name-$stack_version-windows-x86_64.msi"
         "/qn"
         "/norestart"
         "/L"
