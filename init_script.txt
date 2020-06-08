@@ -9,14 +9,19 @@ $snapshot_src_cluster_id = '1234'
 Set-ExecutionPolicy Unrestricted
 $logfile = "c:\Elastic\security_workshop_setup.log"
 $SrcUri = "https://raw.githubusercontent.com/mrebeschini/elastic-security-workshop/v1.0/"
-$HomeDir = "C:\Elastic\"
+$install_dir = "C:\Elastic\"
 
 #The following two commands can be removed once AMI is updated
 Remove-Item C:\Users\Administrator\Desktop\cluster.txt
-Remove-Item -Path $HomeDir -Recurse -Force
+Remove-Item -Path $install_dir -Recurse -Force
+
+if (!(Test-Path $install_dir))
+{
+    New-Item -ItemType Directory -Path $install_dir
+}
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-Invoke-WebRequest -Uri "$SrcUri/security_workshop_setup.ps1" -OutFile "$HomeDir\security_workshop_setup.ps1"
+Invoke-WebRequest -Uri "$SrcUri/security_workshop_setup.ps1" -OutFile "$install_dir\security_workshop_setup.ps1"
 
 $params = $($api_key, `
             $target_gcp_region, `
@@ -25,7 +30,7 @@ $params = $($api_key, `
             $snapshot_name, `
             $snapshot_src_cluster_id)
 try {
-    & “C:\Elastic\security_workshop_setup.ps1" @params | Out-File $logfile
+    & “$install_dir\security_workshop_setup.ps1" @params | Out-File $logfile
 }
 catch {
    $_.Exception.Message | Out-File $logfile -Append
