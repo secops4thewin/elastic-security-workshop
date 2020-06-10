@@ -30,7 +30,7 @@ case $RESPONSE in
             NAME=`echo $DEPLOYMENT | base64 --decode | jq -r '. | .name '`
             ID=`echo $DEPLOYMENT | base64 --decode | jq -r '. | .id '`
             echo -e "\nDeleting Deployment \"$NAME\" [$ID]"
-            ecctl deployment shutdown $ID
+            ecctl deployment shutdown $ID --force -q
          done
     ;;
 esac
