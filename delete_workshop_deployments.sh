@@ -19,7 +19,6 @@ echo -e "\nFound $n matching deployment(s):\n"
 for DEPLOYMENT in ${DEPLOYMENTS[@]};
 do
     echo $DEPLOYMENT | base64 --decode | jq -r '. | .name '
-    #echo $DEPLOYMENT | jq -r '. | @base64d'
 done
 
 echo
