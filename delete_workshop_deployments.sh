@@ -7,7 +7,7 @@ then
     exit -1;
 fi
 
-DEPLOYMENTS=(`ecctl deployment list | jq -r --arg WS_NAME "$WS_NAME" '.deployments[] | select (.name | contains($WS_NAME)) | { id: .id, name: .name } | @base64'`)
+DEPLOYMENTS=(`ecctl deployment list --output json | jq -r --arg WS_NAME "$WS_NAME" '.deployments[] | select (.name | contains($WS_NAME)) | { id: .id, name: .name } | @base64'`)
 n=${#DEPLOYMENTS[@]}
 if [ $n -eq 0 ];
 then
