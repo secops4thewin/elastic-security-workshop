@@ -1,7 +1,7 @@
 #!/bin/bash
 PATH=/usr/local/bin/:$PATH
 
-read -p 'ECC Deployment Name: ' WS_NAME
+read -p 'ESS Deployment Name: ' WS_NAME
 if [ -z "$WS_NAME" ];
 then
     exit -1;
