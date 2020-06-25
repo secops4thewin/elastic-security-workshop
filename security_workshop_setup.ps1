@@ -20,7 +20,7 @@ Write-Output "*** Security Workshop Setup ***`n"
 #Install Sysmon
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $sysmon_installer_uri = "https://download.sysinternals.com/files/Sysmon.zip"
-$sysmon_config_uri = "https://raw.githubusercontent.com/olafhartong/sysmon-configs/master/sysmonconfig-v10.xml"
+$sysmon_config_uri = "https://raw.githubusercontent.com/olafhartong/sysmon-modular/master/sysmonconfig.xml"
 $sysmon_local_rules_filepath = "C:\Windows\sysmon.xml"
 if (Test-Path "C:\Windows\Sysmon64.exe")
 {
