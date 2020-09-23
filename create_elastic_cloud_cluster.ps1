@@ -138,6 +138,7 @@ Write-Output "`nSetup complete!"
 
 ## Create enrollment section for Elastic Agent
 Write-Output "Create enrollment section for Elastic Agent"
+Start-Sleep -Seconds 10
 
 # Build authentication information for later requests
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
