@@ -22,11 +22,7 @@ Write-Output "*** Adversary Emulation Workshop Setup ***`n"
 $sysmon_installer_uri = "https://download.sysinternals.com/files/Sysmon.zip"
 $sysmon_config_uri = "https://raw.githubusercontent.com/olafhartong/sysmon-modular/master/sysmonconfig.xml"
 $sysmon_local_rules_filepath = "C:\Windows\sysmon.xml"
-if (Test-Path "C:\Windows\Sysmon64.exe")
-{
-    Write-Output "Unistalling Sysmon..."
-    Start-Process -WorkingDirectory "C:\Windows" -FilePath "sysmon64" -ArgumentList "-u" -Wait
-}
+
 Write-Output "Installing Sysmon..."
 $sysmon_tmp_dir = "$install_dir\sysmon"
 if (!(Test-Path $sysmon_tmp_dir)) {
