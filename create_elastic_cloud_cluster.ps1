@@ -97,17 +97,17 @@ function ElasticBeatSetup ([string]$beat_name)
     $beat_data_path = "C:\ProgramData\Elastic\Beats\$beat_name\data"
     $beat_config_file = "$beat_config_repository_url/$beatname.yml"
     $beat_artifact_uri = "https://artifacts.elastic.co/downloads/beats/$beat_name/$beat_name-$stack_version-windows-x86_64.msi"
+    $log_file_path = "$install_dir\$beat_name.log"
 
     Write-Output "Installing $beat_name..."
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    Invoke-WebRequest -Uri "$beat_artifact_uri" -OutFile "$download_dir\$beat_name-$stack_version-windows-x86_64.msi"
+    Invoke-WebRequest -Uri "$beat_artifact_uri" -OutFile "$install_dir\$beat_name-$stack_version-windows-x86_64.msi"
     $MSIArguments = @(
         "/i"
-        "$download_dir\$beat_name-$stack_version-windows-x86_64.msi"
+        "$install_dir\$beat_name-$stack_version-windows-x86_64.msi"
         "/qn"
         "/norestart"
         "/L"
-        $logFile
+        $log_file_path
     )
     Start-Process msiexec.exe -Wait -ArgumentList $MSIArguments -NoNewWindow
 
