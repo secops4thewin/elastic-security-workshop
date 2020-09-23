@@ -69,6 +69,7 @@ Write-Output "`nElastic Cloud Deployment was created successfully!"
 $kibana_url = $cluster.resources.kibana.info.metadata.endpoint
 $elasticsearch_url = $cluster.resources[0].elasticsearch[0].info.metadata.endpoint
 
+Write-Output "Creating Credential File"
 #Create Credentials File
 New-Item -Force $credentials_file_path | Out-Null
 Add-Content $credentials_file_path "Kibana URL: https://$kibana_url"
@@ -77,6 +78,7 @@ Add-Content $credentials_file_path "Cloud ID: $cloud_id"
 Add-Content $credentials_file_path "Username: elastic"
 Add-Content $credentials_file_path "Password: $password"
 
+Write-Output "Uninstalling existing beats"
 #Uninstall all Elastic Beats already installed
 $app = Get-WmiObject -Class Win32_Product -Filter ("Vendor = 'Elastic'")
 if ($null -ne $app) {
