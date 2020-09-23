@@ -135,6 +135,7 @@ Write-Output "`nSetup complete!"
 
 
 ## Create enrollment section for Elastic Agent
+Write-Output "Create enrollment section for Elastic Agent"
 
 # Build authentication information for later requests
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -152,15 +153,19 @@ $bodyMsg = @{"forceRecreate" = "false"}
 $bodyJson = ConvertTo-Json($bodyMsg)
 
 # Create Fleet User
+
+Write-Output "Create Fleet User"
 Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/setup" -ContentType "application/json" -Headers $headers -Method POST -body $bodyJson
 
 # Get the first enrollment key
+Write-Output "Get first enrollment key"
 $ekIDBody = (Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/enrollment-api-keys?page=1&perPage=20" -ContentType "application/json" -Headers $headers -Method GET)
 
 # Convert the the Enrollment key request body from json and extract the ID to use in the api request.
 $ekID= (convertfrom-json($ekIDBody.content))[0].list.id
 
 # Get Body of Fleet Enrollment API Key
+Write-Output "Get Enrollment API Key"
 $fleetTokenBody = (Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/enrollment-api-keys/$ekId" -ContentType "application/json" -Headers $headers -Method GET)
 
 # Get Fleet TOken from json message
@@ -191,4 +196,5 @@ $securityConfigDict.config_id = $configId
 
 $securityConfigDictJson = ConvertTo-Json($securityConfigDict)
 
+Write-Output "Enable Security Integration into Default Config in Ingest Manager"
 Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/package_configs" -ContentType "application/json" -Headers $headers -Method POST -body $securityConfigDictJson
