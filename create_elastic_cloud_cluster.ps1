@@ -25,7 +25,7 @@ $sysmon_local_rules_filepath = "C:\Windows\sysmon.xml"
 if (Test-Path "C:\Windows\Sysmon64.exe")
 {
     Write-Output "Unistalling Sysmon..."
-    Start-Process -WorkingDirectory "C:\Windows" -FilePath "sysmon64" -ArgumentList "-u" -Wait -NoNewWindow
+    Start-Process -WorkingDirectory "C:\Windows" -FilePath "sysmon64" -ArgumentList "-u" -Wait
 }
 Write-Output "Installing Sysmon..."
 $sysmon_tmp_dir = "$install_dir\sysmon"
