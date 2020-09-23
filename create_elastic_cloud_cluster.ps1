@@ -1,11 +1,11 @@
- param (
+param (
     [string]$api_key = $(throw "-api_key is required."),
     [string]$target_gcp_region = $(throw "-target_gcp_region is required."),
     [string]$cluster_name = $(throw "-cluster_name is required."),
-    [string]$stack_version = $(throw "-stack_version is required."),
-    [string]$snapshot_name,
-    [string]$snapshot_src_cluster_id
+    [string]$stack_version = $(throw "-stack_version is required.")
  )
+
+ ## Start Cluster Deployment section
 
 $date = (Get-Date).ToString('yyyy-MM-dd')
 $cluster_name = "$date`_$cluster_name"
@@ -20,12 +20,6 @@ $elastic_cloud_plan.name = $cluster_name
 $elastic_cloud_plan.resources[0].elasticsearch[0].region = $target_gcp_region
 $elastic_cloud_plan.resources[0].elasticsearch[0].plan.elasticsearch.version = $stack_version
 $elastic_cloud_plan.resources[0].kibana[0].plan.kibana.version = $stack_version
-if ($snapshot_name) {
-    $elastic_cloud_plan.resources[0].elasticsearch[0].plan.transient.restore_snapshot.snapshot_name = $snapshot_name
-}
-if ($snapshot_src_cluster_id) {
-    $elastic_cloud_plan.resources[0].elasticsearch[0].plan.transient.restore_snapshot.source_cluster_id = $snapshot_src_cluster_id
-}
 
 $cluster_info = Invoke-RestMethod -Method Post -Uri $elastic_cloud_api_uri `
                                   -Headers @{ 'Authorization' = "ApiKey $api_key"; 'Content-Type' = 'application/json'} `
@@ -111,3 +105,65 @@ ElasticBeatSetup("packetbeat");
 ElasticBeatSetup("metricbeat");
 
 Write-Output "`nSetup complete!"
+
+
+
+## Create enrollment section for Elastic Agent
+
+# Build authentication information for later requests
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+$user = "elastic"
+$credential = "${user}:${password}"
+$credentialBytes = [System.Text.Encoding]::ASCII.GetBytes($credential)
+$base64Credential = [System.Convert]::ToBase64String($credentialBytes)
+$basicAuthHeader = "Basic $base64Credential"
+$headers = @{
+    "Authorization" = $basicAuthHeader;
+    "kbn-xsrf" = "reporting"
+}
+
+$bodyMsg = @{"forceRecreate" = "false"}
+$bodyJson = ConvertTo-Json($bodyMsg)
+
+# Create Fleet User
+Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/setup" -ContentType "application/json" -Headers $headers -Method POST -body $bodyJson
+
+# Get the first enrollment key
+$ekIDBody = (Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/enrollment-api-keys?page=1&perPage=20" -ContentType "application/json" -Headers $headers -Method GET)
+
+# Convert the the Enrollment key request body from json and extract the ID to use in the api request.
+$ekID= (convertfrom-json($ekIDBody.content))[0].list.id
+
+# Get Body of Fleet Enrollment API Key
+$fleetTokenBody = (Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/enrollment-api-keys/$ekId" -ContentType "application/json" -Headers $headers -Method GET)
+
+# Get Fleet TOken from json message
+$fleetToken = (ConvertFrom-Json($fleetTokenBody.Content)).item.api_key
+
+# Retrieve configuration ID for passing into the following request
+$configId = (ConvertFrom-Json($fleetTokenBody.Content)).item.config_id
+
+# Create a json request format suitable for  the configuration id 
+$securityConfigDict = @"
+{
+    "name": "security",
+    "description": "",
+    "namespace": "default",
+    "config_id": "test",
+    "enabled": "true",
+    "output_id": "",
+    "inputs": [],
+    "package": {
+        "name": "endpoint",
+        "title": "Elastic Endpoint Security",
+        "version": "0.13.1"
+    }
+}
+"@ | convertfrom-json
+
+$securityConfigDict.config_id = $configId
+
+$securityConfigDictJson = ConvertTo-Json($securityConfigDict)
+
+Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/package_configs" -ContentType "application/json" -Headers $headers -Method POST -body $securityConfigDictJson
+
