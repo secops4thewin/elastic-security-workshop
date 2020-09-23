@@ -9,10 +9,40 @@ param (
 
 $date = (Get-Date).ToString('yyyy-MM-dd')
 $cluster_name = "$date`_$cluster_name"
+$install_dir = "C:\Elastic"
 $elastic_cloud_api_uri = "https://api.elastic-cloud.com/api/v1/deployments"
 $elastic_cloud_plan_template = "C:\Elastic\wsplan.json"
 $credentials_file_path = "C:\Users\Administrator\Desktop\cluster.txt"
 $beat_config_repository_uri = "https://raw.githubusercontent.com/mrebeschini/elastic-security-workshop/master/"
+
+Write-Output "*** Adversary Emulation Workshop Setup ***`n"
+
+#Install Sysmon
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+$sysmon_installer_uri = "https://download.sysinternals.com/files/Sysmon.zip"
+$sysmon_config_uri = "https://raw.githubusercontent.com/olafhartong/sysmon-modular/master/sysmonconfig.xml"
+$sysmon_local_rules_filepath = "C:\Windows\sysmon.xml"
+if (Test-Path "C:\Windows\Sysmon64.exe")
+{
+    Write-Output "Unistalling Sysmon..."
+    Start-Process -WorkingDirectory "C:\Windows" -FilePath "sysmon64" -ArgumentList "-u" -Wait -NoNewWindow
+}
+Write-Output "Installing Sysmon..."
+$sysmon_tmp_dir = "$install_dir\sysmon"
+if (!(Test-Path $sysmon_tmp_dir)) {
+    New-Item -Path $sysmon_tmp_dir -Type directory | Out-Null
+}
+Invoke-WebRequest -Uri $sysmon_config_uri -OutFile $sysmon_local_rules_filepath
+Invoke-WebRequest -Uri $sysmon_installer_uri -OutFile $sysmon_tmp_dir/Sysmon.zip
+Expand-Archive -Path $sysmon_tmp_dir/Sysmon.zip -DestinationPath $sysmon_tmp_dir
+Start-Process -WorkingDirectory $sysmon_tmp_dir -FilePath "sysmon64" -ArgumentList "-accepteula -i $sysmon_local_rules_filepath" -Wait -NoNewWindow
+Remove-Item -Path $sysmon_tmp_dir -Recurse -Force
+Write-Output "Sysmon Installation Complete"
+
+#Download Elastic Cloud Deployment Plan
+Write-Output "`nDownloading Elastic Cloud Deployment Plan..."
+Invoke-WebRequest -Uri "$beat_config_repository_uri/wsplan.json" -OutFile "$install_dir\wsplan.json"    
+
 
 #Update Elastic Cloud Plan based on command line parameters
 $elastic_cloud_plan = Get-Content -Raw $elastic_cloud_plan_template | ConvertFrom-JSON
@@ -166,4 +196,3 @@ $securityConfigDict.config_id = $configId
 $securityConfigDictJson = ConvertTo-Json($securityConfigDict)
 
 Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/package_configs" -ContentType "application/json" -Headers $headers -Method POST -body $securityConfigDictJson
-
