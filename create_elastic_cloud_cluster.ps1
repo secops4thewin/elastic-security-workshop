@@ -158,7 +158,16 @@ $bodyJson = ConvertTo-Json($bodyMsg)
 # Create Fleet User
 
 Write-Output "Create Fleet User"
-Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/setup" -ContentType "application/json" -Headers $headers -Method POST -body $bodyJson
+do {
+    Start-Sleep -Seconds 10
+    Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/setup" -ContentType "application/json" -Headers $headers -Method POST -body $bodyJson -ErrorAction SilentlyContinue
+    Start-Sleep -Seconds 5
+    # Checking the content output to see if the host is ready.
+    $isReady = (convertfrom-json((Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/setup" -ContentType "application/json" -Headers $headers -Method GET).content)).isReady
+    Write-Host -NoNewLine "Attempting Fleet User Setup"
+}
+until ($isReady -eq $True)
+
 
 # Get the first enrollment key
 Write-Output "Get first enrollment key"
