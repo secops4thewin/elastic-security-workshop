@@ -241,8 +241,8 @@ Write-Output "Installing Elastic Agent..."
 Write-Output "Unzipping Elastic Agent from $install_dir\elastic-agent-$stack_version-windows-x86_64.zip to $agent_install_folder"
 Expand-Archive -literalpath $install_dir\elastic-agent-$stack_version-windows-x86_64.zip -DestinationPath $agent_install_folder
 
-Write-Output "Running enroll process of Elastic Agent with token: $token at url: https://$kibana_url"
-Start-Process -WorkingDirectory "$agent_install_folder\elastic-agent-$stack_version-windows-x86_64\" -FilePath "elastic-agent" -ArgumentList "enroll https://$kibana_url $fleetTokenBody --force" -Wait
+Write-Output "Running enroll process of Elastic Agent with token: $fleetToken at url: https://$kibana_url"
+Start-Process -WorkingDirectory "$agent_install_folder\elastic-agent-$stack_version-windows-x86_64\" -FilePath "elastic-agent" -ArgumentList "enroll https://$kibana_url $fleetToken --force" -Wait
 
 Write-Output "Running Agent Install Process"
 & "$agent_install_folder\elastic-agent-$stack_version-windows-x86_64\install-service-elastic-agent.ps1" -Wait
