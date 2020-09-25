@@ -1,3 +1,4 @@
+$ErrorActionPreference = 'Continue'
 param (
     [string]$api_key = $(throw "-api_key is required."),
     [string]$target_gcp_region = $(throw "-target_gcp_region is required."),
@@ -161,7 +162,8 @@ Write-Output "Create Fleet User"
 $fleetCounter = 0
 do {
     Start-Sleep -Seconds 10
-    Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/setup" -ContentType "application/json" -Headers $headers -Method POST -body $bodyJson -ErrorAction SilentlyContinue
+    Write-Output "Trying $fleetCounter times"
+    Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/setup" -ContentType "application/json" -Headers $headers -Method POST -body $bodyJson -ErrorAction SilentlyContinue -verbose
     Start-Sleep -Seconds 5
     # Checking the content output to see if the host is ready.
     $isReady = (convertfrom-json((Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/setup" -ContentType "application/json" -Headers $headers -Method GET).content)).isReady
