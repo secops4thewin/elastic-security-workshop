@@ -236,7 +236,7 @@ Write-Output "Unzipping Elastic Agent from $install_dir\elastic-agent-$stack_ver
 Expand-Archive -literalpath $install_dir\elastic-agent-$stack_version-windows-x86_64.zip -DestinationPath $agent_install_folder
 
 Write-Output "Running enroll process of Elastic Agent"
-Start-Process -WorkingDirectory "$agent_install_folder\elastic-agent-$stack_version-windows-x86_64\" -FilePath "elastic-agent" -ArgumentList "enroll https://$kibana_url $token -y" -Wait -NoNewWindow
+Start-Process -WorkingDirectory "$agent_install_folder\elastic-agent-$stack_version-windows-x86_64\" -FilePath "elastic-agent" -ArgumentList "enroll https://$kibana_url $token -y" -Wait
 
 Write-Output "Running Agent Install Process"
 & "$agent_install_folder\elastic-agent-$stack_version-windows-x86_64\install-service-elastic-agent.ps1" -Wait
