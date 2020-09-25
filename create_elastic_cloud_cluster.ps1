@@ -221,3 +221,27 @@ $securityConfigDictJson = ConvertTo-Json($securityConfigDict)
 
 Write-Output "Enable Security Integration into Default Config in Ingest Manager"
 Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/package_configs" -ContentType "application/json" -Headers $headers -Method POST -body $securityConfigDictJson
+
+
+$elasticAgentUrl = "https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-$stack_version-windows-x86_64.zip"
+$agent_install_folder = "C:\Program Files\Elastic\Agent\$stack_version\"
+
+if (!(Test-Path $agent_install_folder)) {
+    New-Item -Path $agent_install_folder -Type directory | Out-Null
+}
+Write-Output "Downloading Elastic Agent"
+Invoke-WebRequest -Uri $elasticAgentUrl -OutFile "$install_dir\elastic-agent-$stack_version-windows-x86_64.zip"
+Write-Output "Installing Elastic Agent..."
+Write-Output "Unzipping Elastic Agent from $install_dir\elastic-agent-$stack_version-windows-x86_64.zip to $agent_install_folder"
+Expand-Archive -literalpath $install_dir\elastic-agent-$stack_version-windows-x86_64.zip -DestinationPath $agent_install_folder
+
+Write-Output "Running enroll process of Elastic Agent"
+Start-Process -WorkingDirectory "$agent_install_folder\elastic-agent-$stack_version-windows-x86_64\" -FilePath "elastic-agent" -ArgumentList "enroll https://$kibana_url $token -y" -Wait -NoNewWindow
+
+Write-Output "Running Agent Install Process"
+& "$agent_install_folder\elastic-agent-$stack_version-windows-x86_64\install-service-elastic-agent.ps1" -Wait
+
+if ((get-service "elastic-agent") -eq "Stopped")
+{
+    start-service "elastic-agent"
+}
