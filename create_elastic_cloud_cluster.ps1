@@ -1,4 +1,3 @@
-$ErrorActionPreference = 'Continue'
 param (
     [string]$api_key = $(throw "-api_key is required."),
     [string]$target_gcp_region = $(throw "-target_gcp_region is required."),
@@ -159,13 +158,21 @@ $bodyJson = ConvertTo-Json($bodyMsg)
 # Create Fleet User
 
 Write-Output "Create Fleet User"
+Write-Output "Creating fleet user at https://$kibana_url/api/ingest_manager/fleet/setup"
 $fleetCounter = 0
 do {
     Start-Sleep -Seconds 10
     Write-Output "Trying $fleetCounter times"
-    Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/setup" -ContentType "application/json" -Headers $headers -Method POST -body $bodyJson -ErrorAction SilentlyContinue -verbose
+    try{
+        Write-Output "Creating fleet user with POST request at https://$kibana_url/api/ingest_manager/fleet/setup"
+    Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/setup" -ContentType "application/json" -Headers $headers -Method POST -body $bodyJson -ErrorAction SilentlyContinue -ErrorVariable SearchError -verbose
+    }
+    catch{
+        Write-output "Error Message Array: $searchError"
+    }
     Start-Sleep -Seconds 5
     # Checking the content output to see if the host is ready.
+    Write-Output "Checking if Fleet Manager is ready with GET request https://$kibana_url/api/ingest_manager/fleet/setup"
     $isReady = (convertfrom-json((Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/setup" -ContentType "application/json" -Headers $headers -Method GET).content)).isReady
     Write-Host -NoNewLine "Attempting Fleet User Setup"
     $fleetCounter++
