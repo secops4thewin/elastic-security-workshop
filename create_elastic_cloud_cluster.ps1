@@ -85,6 +85,49 @@ if ($null -ne $app) {
     $app.Uninstall()
 }
 
+#Configure Beats
+function ElasticBeatSetup ([string]$beat_name)
+{
+    Write-Output "`n*** Setting up $beat_name ****"
+    $beat_install_folder = "C:\Program Files\Elastic\Beats\$stack_version\$beat_name"
+    $beat_exe_path = "$beat_install_folder\$beat_name.exe"
+    $beat_config_path = "C:\ProgramData\Elastic\Beats\$beat_name\$beat_name.yml"
+    $beat_data_path = "C:\ProgramData\Elastic\Beats\$beat_name\data"
+    $beat_config_file = "$beat_config_repository_url/$beatname.yml"
+    $beat_artifact_uri = "https://artifacts.elastic.co/downloads/beats/$beat_name/$beat_name-$stack_version-windows-x86_64.msi"
+    $log_file_path = "$install_dir\$beat_name.log"
+
+    Write-Output "Installing $beat_name..."
+    Invoke-WebRequest -Uri "$beat_artifact_uri" -OutFile "$install_dir\$beat_name-$stack_version-windows-x86_64.msi"
+    $MSIArguments = @(
+        "/i"
+        "$install_dir\$beat_name-$stack_version-windows-x86_64.msi"
+        "/qn"
+        "/norestart"
+        "/L"
+        $log_file_path
+    )
+    Start-Process msiexec.exe -Wait -ArgumentList $MSIArguments -NoNewWindow
+
+    #Download Beat configuration file
+    Invoke-WebRequest -Uri "$beat_config_repository_uri/$beat_name.yml" -OutFile $beat_config_path
+
+    # Create Beat Keystore and add CLOUD_ID and ES_PWD keys to it
+    $params = $('-c', $beat_config_path, 'keystore','create','--force')
+    & $beat_exe_path @params
+    $params = $('-c', $beat_config_path, 'keystore','add','CLOUD_ID','--stdin','--force','-path.data', $beat_data_path)
+    Write-Output $cloud_id | & $beat_exe_path @params
+    $params = $('-c', $beat_config_path, 'keystore','add','ES_PWD','--stdin','--force','-path.data', $beat_data_path)
+    Write-Output $password | & $beat_exe_path @params
+    
+    # Run Beat Setup
+    Write-Output "Running $beat_name setup..."
+    $params = $('-c', $beat_config_path, 'setup', '-path.data', $beat_data_path)
+    & $beat_exe_path @params
+
+    Write-Output "Starting $beat_name Service"
+    Start-Service -Name $beat_name
+}
 ElasticBeatSetup("winlogbeat");
 ElasticBeatSetup("packetbeat");
 ElasticBeatSetup("metricbeat");
@@ -143,14 +186,22 @@ do {
 until (($isReady -eq $True) -or ($fleetCounter -eq 5) )
 
 
-# Call the GetElasticAgentConfig Gonfig
-$configResult = GetElasticAgentConfig($kibana_url)
+# Get the first enrollment key
+Write-Output "Get first enrollment key"
+$ekIDBody = (Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/enrollment-api-keys?page=1&perPage=20" -ContentType "application/json" -Headers $headers -Method GET)
+
+# Convert the the Enrollment key request body from json and extract the ID to use in the api request.
+$ekID= (convertfrom-json($ekIDBody.content))[0].list.id
+
+# Get Body of Fleet Enrollment API Key
+Write-Output "Get Enrollment API Key"
+$fleetTokenBody = (Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/enrollment-api-keys/$ekId" -ContentType "application/json" -Headers $headers -Method GET)
 
 # Get Fleet TOken from json message
-$fleetToken = $configResult.fleetToken
+$fleetToken = (ConvertFrom-Json($fleetTokenBody.Content)).item.api_key
 
 # Retrieve configuration ID for passing into the following request
-$configId = $configResult.configID
+$configId = (ConvertFrom-Json($fleetTokenBody.Content)).item.config_id
 
 # Create a json request format suitable for  the configuration id 
 $securityConfigDict = @"
@@ -186,13 +237,12 @@ if (!(Test-Path $agent_install_folder)) {
 }
 Write-Output "Downloading Elastic Agent"
 Invoke-WebRequest -Uri $elasticAgentUrl -OutFile "$install_dir\elastic-agent-$stack_version-windows-x86_64.zip"
-
 Write-Output "Installing Elastic Agent..."
 Write-Output "Unzipping Elastic Agent from $install_dir\elastic-agent-$stack_version-windows-x86_64.zip to $agent_install_folder"
 Expand-Archive -literalpath $install_dir\elastic-agent-$stack_version-windows-x86_64.zip -DestinationPath $agent_install_folder
 
 Write-Output "Running enroll process of Elastic Agent with token: $token at url: https://$kibana_url"
-Start-Process -WorkingDirectory "$agent_install_folder\elastic-agent-$stack_version-windows-x86_64\" -FilePath "elastic-agent" -ArgumentList "enroll https://$kibana_url $fleetToken --force" -Wait
+Start-Process -WorkingDirectory "$agent_install_folder\elastic-agent-$stack_version-windows-x86_64\" -FilePath "elastic-agent" -ArgumentList "enroll https://$kibana_url $fleetTokenBody --force" -Wait
 
 Write-Output "Running Agent Install Process"
 & "$agent_install_folder\elastic-agent-$stack_version-windows-x86_64\install-service-elastic-agent.ps1" -Wait
@@ -200,76 +250,4 @@ Write-Output "Running Agent Install Process"
 if ((get-service "elastic-agent") -eq "Stopped")
 {
     start-service "elastic-agent"
-}
-
-
-
-# Function Groups
-function GetElasticAgentConfig ($kibanaUrl)
-{
-# Get the first enrollment key
-Write-Output "Get first enrollment key"
-$ekIDBody = (Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibanaUrl/api/ingest_manager/fleet/enrollment-api-keys?page=1&perPage=20" -ContentType "application/json" -Headers $headers -Method GET)
-
-# Convert the the Enrollment key request body from json and extract the ID to use in the api request.
-$ekID= (convertfrom-json($ekIDBody.content))[0].list.id
-
-# Get Body of Fleet Enrollment API Key
-Write-Output "Get Enrollment API Key"
-$fleetTokenBody = (Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibanaUrl/api/ingest_manager/fleet/enrollment-api-keys/$ekId" -ContentType "application/json" -Headers $headers -Method GET)
-
-# Get Fleet TOken from json message
-$fleetToken = (ConvertFrom-Json($fleetTokenBody.Content)).item.api_key
-
-# Retrieve configuration ID for passing into the following request
-$configId = (ConvertFrom-Json($fleetTokenBody.Content)).item.config_id
-@{
-    fleetToken = $fleetToken
-    configID = $configId
-}
-}
-
-
-#Configure Beats
-function ElasticBeatSetup ([string]$beat_name)
-{
-    Write-Output "`n*** Setting up $beat_name ****"
-    $beat_install_folder = "C:\Program Files\Elastic\Beats\$stack_version\$beat_name"
-    $beat_exe_path = "$beat_install_folder\$beat_name.exe"
-    $beat_config_path = "C:\ProgramData\Elastic\Beats\$beat_name\$beat_name.yml"
-    $beat_data_path = "C:\ProgramData\Elastic\Beats\$beat_name\data"
-    $beat_config_file = "$beat_config_repository_url/$beatname.yml"
-    $beat_artifact_uri = "https://artifacts.elastic.co/downloads/beats/$beat_name/$beat_name-$stack_version-windows-x86_64.msi"
-    $log_file_path = "$install_dir\$beat_name.log"
-
-    Write-Output "Installing $beat_name..."
-    Invoke-WebRequest -Uri "$beat_artifact_uri" -OutFile "$install_dir\$beat_name-$stack_version-windows-x86_64.msi"
-    $MSIArguments = @(
-        "/i"
-        "$install_dir\$beat_name-$stack_version-windows-x86_64.msi"
-        "/qn"
-        "/norestart"
-        "/L"
-        $log_file_path
-    )
-    Start-Process msiexec.exe -Wait -ArgumentList $MSIArguments -NoNewWindow
-
-    #Download Beat configuration file
-    Invoke-WebRequest -Uri "$beat_config_repository_uri/$beat_name.yml" -OutFile $beat_config_path
-
-    # Create Beat Keystore and add CLOUD_ID and ES_PWD keys to it
-    $params = $('-c', $beat_config_path, 'keystore','create','--force')
-    & $beat_exe_path @params
-    $params = $('-c', $beat_config_path, 'keystore','add','CLOUD_ID','--stdin','--force','-path.data', $beat_data_path)
-    Write-Output $cloud_id | & $beat_exe_path @params
-    $params = $('-c', $beat_config_path, 'keystore','add','ES_PWD','--stdin','--force','-path.data', $beat_data_path)
-    Write-Output $password | & $beat_exe_path @params
-    
-    # Run Beat Setup
-    Write-Output "Running $beat_name setup..."
-    $params = $('-c', $beat_config_path, 'setup', '-path.data', $beat_data_path)
-    & $beat_exe_path @params
-
-    Write-Output "Starting $beat_name Service"
-    Start-Service -Name $beat_name
 }
