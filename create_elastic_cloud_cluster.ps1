@@ -172,9 +172,15 @@ do {
     }
     Start-Sleep -Seconds 5
     # Checking the content output to see if the host is ready.
+    try{
     Write-Output "Checking if Fleet Manager is ready with GET request https://$kibana_url/api/ingest_manager/fleet/setup"
-    $isReady = (convertfrom-json((Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/setup" -ContentType "application/json" -Headers $headers -Method GET).content)).isReady
-    Write-Host -NoNewLine "Attempting Fleet User Setup"
+    $fleetGet =  Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/setup" -ContentType "application/json" -Headers $headers -Method GET -ErrorVariable SearchError -verbose
+    $isReady = (convertfrom-json((ss).content)).isReady
+    }
+    catch{
+        Write-output "Error Message Array: $searchError"
+    }
+    
     $fleetCounter++
 }
 until (($isReady -eq $True) -or ($fleetCounter -eq 5) )
