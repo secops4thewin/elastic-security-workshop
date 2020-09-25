@@ -85,6 +85,151 @@ if ($null -ne $app) {
     $app.Uninstall()
 }
 
+ElasticBeatSetup("winlogbeat");
+ElasticBeatSetup("packetbeat");
+ElasticBeatSetup("metricbeat");
+
+Write-Output "`nSetup complete!"
+
+
+
+## Create enrollment section for Elastic Agent
+Write-Output "Create enrollment section for Elastic Agent"
+Start-Sleep -Seconds 60
+
+# Build authentication information for later requests
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+$user = "elastic"
+$credential = "${user}:${password}"
+$credentialBytes = [System.Text.Encoding]::ASCII.GetBytes($credential)
+$base64Credential = [System.Convert]::ToBase64String($credentialBytes)
+$basicAuthHeader = "Basic $base64Credential"
+$headers = @{
+    "Authorization" = $basicAuthHeader;
+    "kbn-xsrf" = "reporting"
+}
+
+$bodyMsg = @{"forceRecreate" = "false"}
+$bodyJson = ConvertTo-Json($bodyMsg)
+
+# Create Fleet User
+
+Write-Output "Create Fleet User"
+Write-Output "Creating fleet user at https://$kibana_url/api/ingest_manager/fleet/setup"
+$fleetCounter = 0
+do {
+    Start-Sleep -Seconds 20
+    Write-Output "Trying $fleetCounter times"
+    try{
+        Write-Output "Creating fleet user with POST request at https://$kibana_url/api/ingest_manager/fleet/setup"
+    Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/setup" -ContentType "application/json" -Headers $headers -Method POST -body $bodyJson -ErrorAction SilentlyContinue -ErrorVariable SearchError
+    }
+    catch{
+        Write-output "Error Message Array: $searchError"
+    }
+    Start-Sleep -Seconds 5
+    # Checking the content output to see if the host is ready.
+    try{
+    Write-Output "Checking if Fleet Manager is ready with GET request https://$kibana_url/api/ingest_manager/fleet/setup"
+    $fleetGet =  Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/setup" -ContentType "application/json" -Headers $headers -Method GET -ErrorVariable SearchError
+    $isReady = (convertfrom-json((ss).content)).isReady
+    }
+    catch{
+        Write-output "Error Message Array: $searchError"
+    }
+    
+    $fleetCounter++
+}
+until (($isReady -eq $True) -or ($fleetCounter -eq 5) )
+
+
+# Call the GetElasticAgentConfig Gonfig
+$configResult = GetElasticAgentConfig($kibana_url)
+
+# Get Fleet TOken from json message
+$fleetToken = $configResult.fleetToken
+
+# Retrieve configuration ID for passing into the following request
+$configId = $configResult.configID
+
+# Create a json request format suitable for  the configuration id 
+$securityConfigDict = @"
+{
+    "name": "security",
+    "description": "",
+    "namespace": "default",
+    "config_id": "test",
+    "enabled": "true",
+    "output_id": "",
+    "inputs": [],
+    "package": {
+        "name": "endpoint",
+        "title": "Elastic Endpoint Security",
+        "version": "0.13.1"
+    }
+}
+"@ | convertfrom-json
+
+$securityConfigDict.config_id = $configId
+
+$securityConfigDictJson = ConvertTo-Json($securityConfigDict)
+
+Write-Output "Enable Security Integration into Default Config in Ingest Manager"
+Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/package_configs" -ContentType "application/json" -Headers $headers -Method POST -body $securityConfigDictJson
+
+
+$elasticAgentUrl = "https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-$stack_version-windows-x86_64.zip"
+$agent_install_folder = "C:\Program Files\Elastic\Agent\$stack_version\"
+
+if (!(Test-Path $agent_install_folder)) {
+    New-Item -Path $agent_install_folder -Type directory | Out-Null
+}
+Write-Output "Downloading Elastic Agent"
+Invoke-WebRequest -Uri $elasticAgentUrl -OutFile "$install_dir\elastic-agent-$stack_version-windows-x86_64.zip"
+
+Write-Output "Installing Elastic Agent..."
+Write-Output "Unzipping Elastic Agent from $install_dir\elastic-agent-$stack_version-windows-x86_64.zip to $agent_install_folder"
+Expand-Archive -literalpath $install_dir\elastic-agent-$stack_version-windows-x86_64.zip -DestinationPath $agent_install_folder
+
+Write-Output "Running enroll process of Elastic Agent with token: $token at url: https://$kibana_url"
+Start-Process -WorkingDirectory "$agent_install_folder\elastic-agent-$stack_version-windows-x86_64\" -FilePath "elastic-agent" -ArgumentList "enroll https://$kibana_url $fleetToken --force" -Wait
+
+Write-Output "Running Agent Install Process"
+& "$agent_install_folder\elastic-agent-$stack_version-windows-x86_64\install-service-elastic-agent.ps1" -Wait
+
+if ((get-service "elastic-agent") -eq "Stopped")
+{
+    start-service "elastic-agent"
+}
+
+
+
+# Function Groups
+function GetElasticAgentConfig ($kibanaUrl)
+{
+# Get the first enrollment key
+Write-Output "Get first enrollment key"
+$ekIDBody = (Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibanaUrl/api/ingest_manager/fleet/enrollment-api-keys?page=1&perPage=20" -ContentType "application/json" -Headers $headers -Method GET)
+
+# Convert the the Enrollment key request body from json and extract the ID to use in the api request.
+$ekID= (convertfrom-json($ekIDBody.content))[0].list.id
+
+# Get Body of Fleet Enrollment API Key
+Write-Output "Get Enrollment API Key"
+$fleetTokenBody = (Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibanaUrl/api/ingest_manager/fleet/enrollment-api-keys/$ekId" -ContentType "application/json" -Headers $headers -Method GET)
+
+# Get Fleet TOken from json message
+$fleetToken = (ConvertFrom-Json($fleetTokenBody.Content)).item.api_key
+
+# Retrieve configuration ID for passing into the following request
+$configId = (ConvertFrom-Json($fleetTokenBody.Content)).item.config_id
+@{
+    fleetToken = $fleetToken
+    configID = $configId
+}
+}
+
+
 #Configure Beats
 function ElasticBeatSetup ([string]$beat_name)
 {
@@ -127,127 +272,4 @@ function ElasticBeatSetup ([string]$beat_name)
 
     Write-Output "Starting $beat_name Service"
     Start-Service -Name $beat_name
-}
-ElasticBeatSetup("winlogbeat");
-ElasticBeatSetup("packetbeat");
-ElasticBeatSetup("metricbeat");
-
-Write-Output "`nSetup complete!"
-
-
-
-## Create enrollment section for Elastic Agent
-Write-Output "Create enrollment section for Elastic Agent"
-Start-Sleep -Seconds 60
-
-# Build authentication information for later requests
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-$user = "elastic"
-$credential = "${user}:${password}"
-$credentialBytes = [System.Text.Encoding]::ASCII.GetBytes($credential)
-$base64Credential = [System.Convert]::ToBase64String($credentialBytes)
-$basicAuthHeader = "Basic $base64Credential"
-$headers = @{
-    "Authorization" = $basicAuthHeader;
-    "kbn-xsrf" = "reporting"
-}
-
-$bodyMsg = @{"forceRecreate" = "false"}
-$bodyJson = ConvertTo-Json($bodyMsg)
-
-# Create Fleet User
-
-Write-Output "Create Fleet User"
-Write-Output "Creating fleet user at https://$kibana_url/api/ingest_manager/fleet/setup"
-$fleetCounter = 0
-do {
-    Start-Sleep -Seconds 10
-    Write-Output "Trying $fleetCounter times"
-    try{
-        Write-Output "Creating fleet user with POST request at https://$kibana_url/api/ingest_manager/fleet/setup"
-    Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/setup" -ContentType "application/json" -Headers $headers -Method POST -body $bodyJson -ErrorAction SilentlyContinue -ErrorVariable SearchError -verbose
-    }
-    catch{
-        Write-output "Error Message Array: $searchError"
-    }
-    Start-Sleep -Seconds 5
-    # Checking the content output to see if the host is ready.
-    try{
-    Write-Output "Checking if Fleet Manager is ready with GET request https://$kibana_url/api/ingest_manager/fleet/setup"
-    $fleetGet =  Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/setup" -ContentType "application/json" -Headers $headers -Method GET -ErrorVariable SearchError -verbose
-    $isReady = (convertfrom-json((ss).content)).isReady
-    }
-    catch{
-        Write-output "Error Message Array: $searchError"
-    }
-    
-    $fleetCounter++
-}
-until (($isReady -eq $True) -or ($fleetCounter -eq 5) )
-
-
-# Get the first enrollment key
-Write-Output "Get first enrollment key"
-$ekIDBody = (Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/enrollment-api-keys?page=1&perPage=20" -ContentType "application/json" -Headers $headers -Method GET)
-
-# Convert the the Enrollment key request body from json and extract the ID to use in the api request.
-$ekID= (convertfrom-json($ekIDBody.content))[0].list.id
-
-# Get Body of Fleet Enrollment API Key
-Write-Output "Get Enrollment API Key"
-$fleetTokenBody = (Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/enrollment-api-keys/$ekId" -ContentType "application/json" -Headers $headers -Method GET)
-
-# Get Fleet TOken from json message
-$fleetToken = (ConvertFrom-Json($fleetTokenBody.Content)).item.api_key
-
-# Retrieve configuration ID for passing into the following request
-$configId = (ConvertFrom-Json($fleetTokenBody.Content)).item.config_id
-
-# Create a json request format suitable for  the configuration id 
-$securityConfigDict = @"
-{
-    "name": "security",
-    "description": "",
-    "namespace": "default",
-    "config_id": "test",
-    "enabled": "true",
-    "output_id": "",
-    "inputs": [],
-    "package": {
-        "name": "endpoint",
-        "title": "Elastic Endpoint Security",
-        "version": "0.13.1"
-    }
-}
-"@ | convertfrom-json
-
-$securityConfigDict.config_id = $configId
-
-$securityConfigDictJson = ConvertTo-Json($securityConfigDict)
-
-Write-Output "Enable Security Integration into Default Config in Ingest Manager"
-Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/package_configs" -ContentType "application/json" -Headers $headers -Method POST -body $securityConfigDictJson
-
-
-$elasticAgentUrl = "https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-$stack_version-windows-x86_64.zip"
-$agent_install_folder = "C:\Program Files\Elastic\Agent\$stack_version\"
-
-if (!(Test-Path $agent_install_folder)) {
-    New-Item -Path $agent_install_folder -Type directory | Out-Null
-}
-Write-Output "Downloading Elastic Agent"
-Invoke-WebRequest -Uri $elasticAgentUrl -OutFile "$install_dir\elastic-agent-$stack_version-windows-x86_64.zip"
-Write-Output "Installing Elastic Agent..."
-Write-Output "Unzipping Elastic Agent from $install_dir\elastic-agent-$stack_version-windows-x86_64.zip to $agent_install_folder"
-Expand-Archive -literalpath $install_dir\elastic-agent-$stack_version-windows-x86_64.zip -DestinationPath $agent_install_folder
-
-Write-Output "Running enroll process of Elastic Agent"
-Start-Process -WorkingDirectory "$agent_install_folder\elastic-agent-$stack_version-windows-x86_64\" -FilePath "elastic-agent" -ArgumentList "enroll https://$kibana_url $token -y" -Wait
-
-Write-Output "Running Agent Install Process"
-& "$agent_install_folder\elastic-agent-$stack_version-windows-x86_64\install-service-elastic-agent.ps1" -Wait
-
-if ((get-service "elastic-agent") -eq "Stopped")
-{
-    start-service "elastic-agent"
 }
