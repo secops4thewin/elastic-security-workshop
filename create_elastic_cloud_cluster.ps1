@@ -245,7 +245,7 @@ Write-Output "Running enroll process of Elastic Agent with token: $fleetToken at
 Start-Process -WorkingDirectory "$agent_install_folder\elastic-agent-$stack_version-windows-x86_64\" -FilePath "elastic-agent" -ArgumentList "enroll https://$kibana_url $fleetToken --force" -Wait
 
 Write-Output "Running Agent Install Process"
-& "$agent_install_folder\elastic-agent-$stack_version-windows-x86_64\install-service-elastic-agent.ps1" -Wait
+Start-Process -WorkingDirectory "$agent_install_folder\elastic-agent-$stack_version-windows-x86_64\" -FilePath "elastic-agent" -ArgumentList "install -f --kibana-url https://$kibana_url --enrollment-token $fleetToken" -Wait
 
 if ((get-service "elastic-agent") -eq "Stopped")
 {
