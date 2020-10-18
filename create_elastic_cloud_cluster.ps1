@@ -14,6 +14,7 @@ $elastic_cloud_api_uri = "https://api.elastic-cloud.com/api/v1/deployments"
 $elastic_cloud_plan_template = "C:\Elastic\wsplan.json"
 $credentials_file_path = "C:\Users\Administrator\Desktop\cluster.txt"
 $beat_config_repository_uri = "https://raw.githubusercontent.com/ElasticSA/elastic-security-workshop/v1.0"
+$wsplan_config_respository_uri = "https://raw.githubusercontent.com/secops4thewin/elastic-security-workshop"
 
 Write-Output "*** Adversary Emulation Workshop Setup ***`n"
 
@@ -37,7 +38,7 @@ Write-Output "Sysmon Installation Complete"
 
 #Download Elastic Cloud Deployment Plan
 Write-Output "`nDownloading Elastic Cloud Deployment Plan..."
-Invoke-WebRequest -Uri "$beat_config_repository_uri/wsplan.json" -OutFile "$install_dir\wsplan.json"    
+Invoke-WebRequest -Uri "$wsplan_config_respository_uri/wsplan.json" -OutFile "$install_dir\wsplan.json"    
 
 
 #Update Elastic Cloud Plan based on command line parameters
