@@ -1,0 +1,85 @@
+{
+  "resources": {
+    "elasticsearch": [
+      {
+        "region": "gcp-europe-west1",
+        "settings": {
+          "dedicated_masters_threshold": 6
+        },
+        "plan": {
+          "cluster_topology": [
+            {
+              "node_type": {
+                "data": true,
+                "master": true,
+                "ingest": true
+              },
+              "instance_configuration_id": "gcp.data.highio.1",
+              "zone_count": 2,
+              "size": {
+                "resource": "memory",
+                "value": 8192
+              },
+              "elasticsearch": {
+                "enabled_built_in_plugins": []
+              }
+            },
+            {
+              "node_type": {
+                "data": false,
+                "master": false,
+                "ingest": false,
+                "ml": true
+              },
+              "instance_configuration_id": "gcp.ml.1",
+              "zone_count": 2,
+              "size": {
+                "resource": "memory",
+                "value": 8192
+              },
+              "elasticsearch": {
+                "enabled_built_in_plugins": []
+              }
+            }
+          ],
+          "elasticsearch": {
+            "version": "7.9.2"
+          },
+          "deployment_template": {
+            "id": "gcp-security"
+          },
+          "transient": {
+            "restore_snapshot": {
+              "snapshot_name": "cloud-snapshot-2020.05.24-dt-mjypctigylv67uy7ogw",
+              "source_cluster_id": "41e04bd9d4fb482c827c0dfbf03e1f47"
+            }
+          }
+        },
+        "ref_id": "main-elasticsearch"
+      }
+    ],
+    "enterprise_search": [],
+    "kibana": [
+      {
+        "elasticsearch_cluster_ref_id": "main-elasticsearch",
+        "region": "gcp-europe-west1",
+        "plan": {
+          "cluster_topology": [
+            {
+              "instance_configuration_id": "gcp.kibana.1",
+              "zone_count": 1,
+              "size": {
+                "resource": "memory",
+                "value": 8192
+              }
+            }
+          ],
+          "kibana": {
+            "version": "7.9.2"
+          }
+        },
+        "ref_id": "main-kibana"
+      }
+    ],
+    "apm": []
+  }}
