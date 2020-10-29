@@ -3,6 +3,7 @@ param (
     [string]$target_gcp_region = $(throw "-target_gcp_region is required."),
     [string]$cluster_name = $(throw "-cluster_name is required."),
     [string]$stack_version = $(throw "-stack_version is required.")
+    [string]$agent_version = $(throw "-agent_version is required.")
  )
 
  ## Start Cluster Deployment section
@@ -90,19 +91,19 @@ if ($null -ne $app) {
 function ElasticBeatSetup ([string]$beat_name)
 {
     Write-Output "`n*** Setting up $beat_name ****"
-    $beat_install_folder = "C:\Program Files\Elastic\Beats\$stack_version\$beat_name"
+    $beat_install_folder = "C:\Program Files\Elastic\Beats\$agent_version\$beat_name"
     $beat_exe_path = "$beat_install_folder\$beat_name.exe"
     $beat_config_path = "C:\ProgramData\Elastic\Beats\$beat_name\$beat_name.yml"
     $beat_data_path = "C:\ProgramData\Elastic\Beats\$beat_name\data"
     $beat_config_file = "$beat_config_repository_url/$beatname.yml"
-    $beat_artifact_uri = "https://artifacts.elastic.co/downloads/beats/$beat_name/$beat_name-$stack_version-windows-x86_64.msi"
+    $beat_artifact_uri = "https://artifacts.elastic.co/downloads/beats/$beat_name/$beat_name-$agent_version-windows-x86_64.msi"
     $log_file_path = "$install_dir\$beat_name.log"
 
     Write-Output "Installing $beat_name..."
-    Invoke-WebRequest -Uri "$beat_artifact_uri" -OutFile "$install_dir\$beat_name-$stack_version-windows-x86_64.msi"
+    Invoke-WebRequest -Uri "$beat_artifact_uri" -OutFile "$install_dir\$beat_name-$agent_version-windows-x86_64.msi"
     $MSIArguments = @(
         "/i"
-        "$install_dir\$beat_name-$stack_version-windows-x86_64.msi"
+        "$install_dir\$beat_name-$agent_version-windows-x86_64.msi"
         "/qn"
         "/norestart"
         "/L"
@@ -230,23 +231,23 @@ Write-Output "Enable Security Integration into Default Config in Ingest Manager"
 Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/package_configs" -ContentType "application/json" -Headers $headers -Method POST -body $securityConfigDictJson
 
 
-$elasticAgentUrl = "https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-$stack_version-windows-x86_64.zip"
-$agent_install_folder = "C:\Program Files\Elastic\Agent\$stack_version\"
+$elasticAgentUrl = "https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-$agent_version-windows-x86_64.zip"
+$agent_install_folder = "C:\Program Files\Elastic\Agent\$agent_version\"
 
 if (!(Test-Path $agent_install_folder)) {
     New-Item -Path $agent_install_folder -Type directory | Out-Null
 }
 Write-Output "Downloading Elastic Agent"
-Invoke-WebRequest -Uri $elasticAgentUrl -OutFile "$install_dir\elastic-agent-$stack_version-windows-x86_64.zip"
+Invoke-WebRequest -Uri $elasticAgentUrl -OutFile "$install_dir\elastic-agent-$agent_version-windows-x86_64.zip"
 Write-Output "Installing Elastic Agent..."
-Write-Output "Unzipping Elastic Agent from $install_dir\elastic-agent-$stack_version-windows-x86_64.zip to $agent_install_folder"
-Expand-Archive -literalpath $install_dir\elastic-agent-$stack_version-windows-x86_64.zip -DestinationPath $agent_install_folder
+Write-Output "Unzipping Elastic Agent from $install_dir\elastic-agent-$agent_version-windows-x86_64.zip to $agent_install_folder"
+Expand-Archive -literalpath $install_dir\elastic-agent-$agent_version-windows-x86_64.zip -DestinationPath $agent_install_folder
 
 Write-Output "Running enroll process of Elastic Agent with token: $fleetToken at url: https://$kibana_url"
-Start-Process -WorkingDirectory "$agent_install_folder\elastic-agent-$stack_version-windows-x86_64\" -FilePath "elastic-agent" -ArgumentList "enroll https://$kibana_url $fleetToken --force" -Wait
+Start-Process -WorkingDirectory "$agent_install_folder\elastic-agent-$agent_version-windows-x86_64\" -FilePath "elastic-agent" -ArgumentList "enroll https://$kibana_url $fleetToken --force" -Wait
 
 Write-Output "Running Agent Install Process"
-& "$agent_install_folder\elastic-agent-$stack_version-windows-x86_64\install-service-elastic-agent.ps1" -Wait
+& "$agent_install_folder\elastic-agent-$agent_version-windows-x86_64\install-service-elastic-agent.ps1" -Wait
 
 if ((get-service "elastic-agent") -eq "Stopped")
 {
