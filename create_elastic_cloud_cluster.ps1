@@ -177,8 +177,8 @@ do {
     # Checking the content output to see if the host is ready.
     try{
     Write-Output "Checking if Fleet Manager is ready with GET request https://$kibana_url/api/fleet/setup"
-    $fleetGet =  Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/fleet/setup" -ContentType "application/json" -Headers $headers -Method GET -ErrorVariable SearchError
-    $isReady = (convertfrom-json((ss).content)).isReady
+    $fleetGet =  Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/fleet/check-permissions" -ContentType "application/json" -Headers $headers -Method GET -ErrorVariable SearchError
+    $isReady = (convertfrom-json($fleetGet).content).success
     }
     catch{
         Write-output "Error Message Array: $searchError"
