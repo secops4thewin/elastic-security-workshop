@@ -1,4 +1,4 @@
-param (
+clparam (
     [string]$api_key = $(throw "-api_key is required."),
     [string]$target_gcp_region = $(throw "-target_gcp_region is required."),
     [string]$cluster_name = $(throw "-cluster_name is required."),
@@ -14,6 +14,7 @@ $install_dir = "C:\Elastic"
 $elastic_cloud_api_uri = "https://api.elastic-cloud.com/api/v1/deployments"
 $elastic_cloud_plan_template = "C:\Elastic\wsplan.json"
 $credentials_file_path = "C:\Users\Administrator\Desktop\cluster.txt"
+$done_file_path = "C:\Users\Administrator\Desktop\done.txt"
 $beat_config_repository_uri = "https://raw.githubusercontent.com/ElasticSA/elastic-security-workshop/v1.0"
 $wsplan_config_respository_uri = "https://raw.githubusercontent.com/secops4thewin/elastic-security-workshop/master"
 
@@ -160,14 +161,14 @@ $bodyJson = ConvertTo-Json($bodyMsg)
 # Create Fleet User
 
 Write-Output "Create Fleet User"
-Write-Output "Creating fleet user at https://$kibana_url/api/ingest_manager/fleet/setup"
+Write-Output "Creating fleet user at https://$kibana_url/api/fleet/setup"
 $fleetCounter = 0
 do {
     Start-Sleep -Seconds 20
     Write-Output "Trying $fleetCounter times"
     try{
-        Write-Output "Creating fleet user with POST request at https://$kibana_url/api/ingest_manager/fleet/setup"
-    Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/setup" -ContentType "application/json" -Headers $headers -Method POST -body $bodyJson -ErrorAction SilentlyContinue -ErrorVariable SearchError
+        Write-Output "Creating fleet user with POST request at https://$kibana_url/api/fleet/setup"
+    Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/fleet/setup" -ContentType "application/json" -Headers $headers -Method POST -body $bodyJson -ErrorAction SilentlyContinue -ErrorVariable SearchError
     }
     catch{
         Write-output "Error Message Array: $searchError"
@@ -175,8 +176,8 @@ do {
     Start-Sleep -Seconds 5
     # Checking the content output to see if the host is ready.
     try{
-    Write-Output "Checking if Fleet Manager is ready with GET request https://$kibana_url/api/ingest_manager/fleet/setup"
-    $fleetGet =  Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/setup" -ContentType "application/json" -Headers $headers -Method GET -ErrorVariable SearchError
+    Write-Output "Checking if Fleet Manager is ready with GET request https://$kibana_url/api/fleet/setup"
+    $fleetGet =  Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/fleet/setup" -ContentType "application/json" -Headers $headers -Method GET -ErrorVariable SearchError
     $isReady = (convertfrom-json((ss).content)).isReady
     }
     catch{
@@ -190,14 +191,14 @@ until (($isReady -eq $True) -or ($fleetCounter -eq 5) )
 
 # Get the first enrollment key
 Write-Output "Get first enrollment key"
-$ekIDBody = (Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/enrollment-api-keys?page=1&perPage=20" -ContentType "application/json" -Headers $headers -Method GET)
+$ekIDBody = (Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/fleet/enrollment-api-keys?page=1&perPage=20" -ContentType "application/json" -Headers $headers -Method GET)
 
 # Convert the the Enrollment key request body from json and extract the ID to use in the api request.
 $ekID= (convertfrom-json($ekIDBody.content))[0].list.id
 
 # Get Body of Fleet Enrollment API Key
 Write-Output "Get Enrollment API Key"
-$fleetTokenBody = (Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/fleet/enrollment-api-keys/$ekId" -ContentType "application/json" -Headers $headers -Method GET)
+$fleetTokenBody = (Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/fleet/enrollment-api-keys/$ekId" -ContentType "application/json" -Headers $headers -Method GET)
 
 # Get Fleet TOken from json message
 $fleetToken = (ConvertFrom-Json($fleetTokenBody.Content)).item.api_key
@@ -228,7 +229,7 @@ $securityConfigDict.config_id = $configId
 $securityConfigDictJson = ConvertTo-Json($securityConfigDict)
 
 Write-Output "Enable Security Integration into Default Config in Ingest Manager"
-Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/ingest_manager/package_configs" -ContentType "application/json" -Headers $headers -Method POST -body $securityConfigDictJson
+Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/package_configs" -ContentType "application/json" -Headers $headers -Method POST -body $securityConfigDictJson
 
 
 $elasticAgentUrl = "https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-$agent_version-windows-x86_64.zip"
@@ -253,3 +254,6 @@ if ((get-service "elastic-agent") -eq "Stopped")
 {
     start-service "elastic-agent"
 }
+
+New-Item -Force $done_file_path | Out-Null
+Add-Content $done_file_path "Done"
