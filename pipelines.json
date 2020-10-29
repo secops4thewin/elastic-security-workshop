@@ -1,5 +1,7 @@
 [
 {
+  "name": "windows_geo_mitre",
+  "pipeline": {
   "windows_geo_mitre" : {
     "description" : "Add geoip info and mitre id's",
     "processors" : [
@@ -133,8 +135,10 @@
       }
     ]
   }
-},
+}},
 {
+    "name": "geoip-info",
+  "pipeline": {
   "geoip-info" : {
     "description" : "Add geoip info",
     "processors" : [
@@ -227,8 +231,11 @@
       }
     ]
   }
+}
 },
 {
+      "name": "mitre_auditbeat",
+  "pipeline": {
   "mitre_auditbeat" : {
     "description" : "mitre",
     "processors" : [
@@ -370,5 +377,5 @@
       }
     ]
   }
-}
+}}
 ]
