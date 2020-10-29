@@ -1,13 +1,11 @@
 {
-  "name": "",
-  "metadata": {
-    "system_owned": false
-  },
   "resources": {
     "elasticsearch": [
       {
-        "region": "gcp-australia-southeast1",
-        "ref_id": "main-elasticsearch",
+        "region": "gcp-europe-west1",
+        "settings": {
+          "dedicated_masters_threshold": 6
+        },
         "plan": {
           "cluster_topology": [
             {
@@ -23,9 +21,7 @@
                 "value": 8192
               },
               "elasticsearch": {
-                "enabled_built_in_plugins": [
-                  "mapper-size"
-                ]
+                "enabled_built_in_plugins": []
               }
             },
             {
@@ -42,30 +38,28 @@
                 "value": 8192
               },
               "elasticsearch": {
-                "enabled_built_in_plugins": [
-                  "mapper-size"
-                ]
+                "enabled_built_in_plugins": []
               }
             }
           ],
           "elasticsearch": {
-            "version": "7.7.0"
+            "version": "7.9.2"
           },
           "deployment_template": {
             "id": "gcp-io-optimized"
+          },
+          "transient": {
+            "restore_snapshot": null
           }
-
         },
-        "settings": {
-          "dedicated_masters_threshold": 6
-        }
+        "ref_id": "main-elasticsearch"
       }
     ],
+    "enterprise_search": [],
     "kibana": [
       {
-        "region": "gcp-australia-southeast1",
         "elasticsearch_cluster_ref_id": "main-elasticsearch",
-        "ref_id": "main-kibana",
+        "region": "gcp-europe-west1",
         "plan": {
           "cluster_topology": [
             {
@@ -78,11 +72,16 @@
             }
           ],
           "kibana": {
-            "version": "7.7.0"
+            "version": "7.9.2"
           }
-        }
+        },
+        "ref_id": "main-kibana"
       }
     ],
     "apm": []
+  },
+  "name": "i-o-optimized-deployment",
+  "metadata": {
+    "system_owned": false
   }
 }
