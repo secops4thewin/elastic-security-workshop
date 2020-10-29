@@ -2,7 +2,7 @@ param (
     [string]$api_key = $(throw "-api_key is required."),
     [string]$target_gcp_region = $(throw "-target_gcp_region is required."),
     [string]$cluster_name = $(throw "-cluster_name is required."),
-    [string]$stack_version = $(throw "-stack_version is required.")
+    [string]$stack_version = $(throw "-stack_version is required."),
     [string]$agent_version = $(throw "-agent_version is required.")
  )
 
