@@ -17,6 +17,7 @@ $credentials_file_path = "C:\Users\Administrator\Desktop\cluster.txt"
 $done_file_path = "C:\Users\Administrator\Desktop\done.txt"
 $beat_config_repository_uri = "https://raw.githubusercontent.com/ElasticSA/elastic-security-workshop/v1.0"
 $wsplan_config_respository_uri = "https://raw.githubusercontent.com/secops4thewin/elastic-security-workshop/master"
+$pipeline_file = "https://raw.githubusercontent.com/secops4thewin/elastic-security-workshop/master/pipelines.json"
 
 Write-Output "*** Adversary Emulation Workshop Setup ***`n"
 
@@ -153,6 +154,21 @@ $basicAuthHeader = "Basic $base64Credential"
 $headers = @{
     "Authorization" = $basicAuthHeader;
     "kbn-xsrf" = "reporting"
+}
+
+## Create index pipelines for Windows Data Collection
+# Create Headers for Elasticsearch post Request
+$esHeaders = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
+$esHeaders.Add("Content-Type", "application/json")
+$esHeaders.Add("Accept", "application/json")
+$esHeaders.Add("Authorization", $basicAuthHeader)
+$pipelineJson = Invoke-WebRequest -Uri $pipeline_file | ConvertFrom-Json
+
+foreach ($pipeline in $pipelineJson){
+$pipeline_name = $pipeline.name
+$pipelineJsonBody = $pipeline.pipeline.$pipeline_name | ConvertTo-Json -Depth 10
+
+Invoke-RestMethod -Uri "$elasticsearch_url/_ingest/pipeline/$pipeline_name" -Method "PUT" -Headers $esHeaders -Body $pipelineJsonBody
 }
 
 $bodyMsg = @{"forceRecreate" = "false"}
