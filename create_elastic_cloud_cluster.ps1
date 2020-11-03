@@ -1,4 +1,4 @@
-clparam (
+param (
     [string]$api_key = $(throw "-api_key is required."),
     [string]$target_gcp_region = $(throw "-target_gcp_region is required."),
     [string]$cluster_name = $(throw "-cluster_name is required."),
