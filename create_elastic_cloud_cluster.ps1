@@ -141,8 +141,7 @@ Write-Output "`nSetup complete!"
 
 
 ## Create enrollment section for Elastic Agent
-Write-Output "Create enrollment section for Elastic Agent"
-Start-Sleep -Seconds 60
+Write-Output "Create Authentication Header for Kibana"
 
 # Build authentication information for later requests
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -155,6 +154,10 @@ $headers = @{
     "Authorization" = $basicAuthHeader;
     "kbn-xsrf" = "reporting"
 }
+$bodyMsg = @{"forceRecreate" = "false"}
+$bodyJson = ConvertTo-Json($bodyMsg)
+
+Write-Output "Download Pipeline file from $pipeline_file"
 
 ## Create index pipelines for Windows Data Collection
 # Create Headers for Elasticsearch post Request
@@ -164,20 +167,21 @@ $esHeaders.Add("Accept", "application/json")
 $esHeaders.Add("Authorization", $basicAuthHeader)
 $pipelineJson = Invoke-WebRequest -Uri $pipeline_file | ConvertFrom-Json
 
+Write-Output "Create index templates for winlogbeat"
+
 foreach ($pipeline in $pipelineJson){
 $pipeline_name = $pipeline.name
 $pipelineJsonBody = $pipeline.pipeline.$pipeline_name | ConvertTo-Json -Depth 10
-
-Invoke-RestMethod -Uri "$elasticsearch_url/_ingest/pipeline/$pipeline_name" -Method "PUT" -Headers $esHeaders -Body $pipelineJsonBody
+Write-Output "Creating index templates $pipeline_name"
+Invoke-RestMethod -Uri "https://$elasticsearch_url/_ingest/pipeline/$pipeline_name" -Method "PUT" -Headers $esHeaders -Body $pipelineJsonBody
 }
 
-$bodyMsg = @{"forceRecreate" = "false"}
-$bodyJson = ConvertTo-Json($bodyMsg)
+
 
 # Create Fleet User
-
 Write-Output "Create Fleet User"
 Write-Output "Creating fleet user at https://$kibana_url/api/fleet/setup"
+Start-Sleep -Seconds 60
 $fleetCounter = 0
 do {
     Start-Sleep -Seconds 20
@@ -268,8 +272,12 @@ Write-Output "Running Agent Install Process"
 
 if ((get-service "elastic-agent") -eq "Stopped")
 {
+Write-Output "Starting Agent Service"
+
     start-service "elastic-agent"
 }
 
 New-Item -Force $done_file_path | Out-Null
+Write-Output "Finished"
+
 Add-Content $done_file_path "Done"
