@@ -154,7 +154,7 @@ $headers = @{
     "Authorization" = $basicAuthHeader;
     "kbn-xsrf" = "reporting"
 }
-$bodyMsg = @{"forceRecreate" = "false"}
+$bodyMsg = @{"forceRecreate" = "true"}
 $bodyJson = ConvertTo-Json($bodyMsg)
 
 Write-Output "Download Pipeline file from $pipeline_file"
@@ -198,7 +198,7 @@ do {
     try{
     Write-Output "Checking if Fleet Manager is ready with GET request https://$kibana_url/api/fleet/setup"
     $fleetGet =  Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/fleet/check-permissions" -ContentType "application/json" -Headers $headers -Method GET -ErrorVariable SearchError
-    $isReady = (convertfrom-json($fleetGet).content).success
+    $isReady = (convertfrom-json($ekidbody.content)).total
     }
     catch{
         Write-output "Error Message Array: $searchError"
@@ -206,7 +206,7 @@ do {
     
     $fleetCounter++
 }
-until (($isReady -eq $True) -or ($fleetCounter -eq 5) )
+until (($isReady -gt 0) -or ($fleetCounter -eq 5) )
 
 
 # Get the first enrollment key
