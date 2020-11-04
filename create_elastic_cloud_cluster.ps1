@@ -196,9 +196,9 @@ do {
     Start-Sleep -Seconds 5
     # Checking the content output to see if the host is ready.
     try{
-    Write-Output "Checking if Fleet Manager is ready with GET request https://$kibana_url/api/fleet/setup"
-    $fleetGet =  Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/fleet/check-permissions" -ContentType "application/json" -Headers $headers -Method GET -ErrorVariable SearchError
-    $isReady = (convertfrom-json($ekidbody.content)).total
+    Write-Output "Checking if Fleet Manager is ready with GET request https://$kibana_url/api/fleet/enrollment-api-keys?page=1&perPage=20"
+    $ekIDBody = (Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/fleet/enrollment-api-keys?page=1&perPage=20" -ContentType "application/json" -Headers $headers -Method GET  -ErrorVariable SearchError)
+    $isReady = (convertfrom-json($ekIDBody.content)).total
     }
     catch{
         Write-output "Error Message Array: $searchError"
