@@ -188,7 +188,7 @@ do {
     Write-Output "Trying $fleetCounter times"
     try{
         Write-Output "Creating fleet user with POST request at https://$kibana_url/api/fleet/setup"
-    Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/fleet/setup" -ContentType "application/json" -Headers $headers -Method POST -body $bodyJson -ErrorAction SilentlyContinue -ErrorVariable SearchError
+    Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/fleet/agents/setup" -ContentType "application/json" -Headers $headers -Method POST -body $bodyJson -ErrorAction SilentlyContinue -ErrorVariable SearchError
     }
     catch{
         Write-output "Error Message Array: $searchError"
