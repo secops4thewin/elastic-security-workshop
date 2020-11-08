@@ -181,7 +181,6 @@ Invoke-RestMethod -Uri "https://$elasticsearch_url/_ingest/pipeline/$pipeline_na
 # Create Fleet User
 Write-Output "Create Fleet User"
 Write-Output "Creating fleet user at https://$kibana_url/api/fleet/setup"
-Start-Sleep -Seconds 60
 $fleetCounter = 0
 do {
     Start-Sleep -Seconds 20
