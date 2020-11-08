@@ -196,7 +196,7 @@ do {
     # Checking the content output to see if the host is ready.
     try{
     Write-Output "Checking if Fleet Manager is ready with GET request https://$kibana_url/api/fleet/enrollment-api-keys?page=1&perPage=20"
-    $ekIDBody = (Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/fleet/enrollment-api-keys?page=1&perPage=20" -ContentType "application/json" -Headers $headers -Method GET  -ErrorVariable SearchError)
+    $ekIDBody = (Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/fleet/agent_policies?page=1&perPage=20&sortField=updated_at&sortOrder=desc&kuery=" -ContentType "application/json" -Headers $headers -Method GET  -ErrorVariable SearchError)
     $isReady = (convertfrom-json($ekIDBody.content)).total
     }
     catch{
@@ -207,25 +207,16 @@ do {
 }
 until (($isReady -gt 0) -or ($fleetCounter -eq 5) )
 
-
-# Get the first enrollment key
-Write-Output "Get first enrollment key"
-$ekIDBody = (Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/fleet/enrollment-api-keys?page=1&perPage=20" -ContentType "application/json" -Headers $headers -Method GET)
-
-# Convert the the Enrollment key request body from json and extract the ID to use in the api request.
-$ekID= (convertfrom-json($ekIDBody.content))[0].id
-
 # Get Body of Fleet Enrollment API Key
 Write-Output "Get Enrollment API Key"
-$fleetTokenBody = (Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/fleet/enrollment-api-keys/$ekId" -ContentType "application/json" -Headers $headers -Method GET)
+$ApiKeyList = (ConvertFrom-Json(Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/fleet/enrollment-api-keys" -ContentType "application/json" -Headers $headers -Method GET))
 
 # Get Fleet TOken from json message
-$fleetToken = (ConvertFrom-Json($fleetTokenBody.Content)).item.api_key
+$ApiKeyId = $ApiKeyList.list[0].id
 
-# Retrieve configuration ID for passing into the following request
-$configId = (ConvertFrom-Json($fleetTokenBody.Content)).item.config_id
+$ApiKeyActual = (ConvertFrom-Json(Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/fleet/enrollment-api-keys/$ApiKeyId" -ContentType "application/json" -Headers $headers -Method GET))
 
-$policyId = (ConvertFrom-Json($fleetTokenBody.Content)).item.policy_id
+$policyId = $ApiKeyActual.item[0].policy_id
 
 # Get list of current packages for an up to date Endpoint Version
 $packageList = (convertfrom-json(Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/fleet/epm/packages" -ContentType "application/json" -Headers $headers -Method GET))
@@ -237,25 +228,23 @@ $securityConfigDict = @"
     "name": "security",
     "description": "",
     "namespace": "default",
-    "policy_id": $policyId,
+    "policy_id": "$policyId",
     "enabled": "true",
     "output_id": "",
     "inputs": [],
     "package": {
         "name": "endpoint",
         "title": "Elastic Endpoint Security",
-        "version": $endpointPackageVersion
+        "version": "$endpointPackageVersion"
     }
 }
 
 "@ | convertfrom-json
 
-$securityConfigDict.config_id = $configId
-
 $securityConfigDictJson = ConvertTo-Json($securityConfigDict)
 
 Write-Output "Enable Security Integration into Default Config in Ingest Manager"
-Invoke-WebRequest -UseBasicParsing -Uri  "'https://$kibana_url/api/fleet/package_policies'" -ContentType "application/json" -Headers $headers -Method POST -body $securityConfigDictJson
+Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/fleet/package_policies" -ContentType "application/json" -Headers $headers -Method POST -body $securityConfigDictJson
 
 
 $elasticAgentUrl = "https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-$agent_version-windows-x86_64.zip"
