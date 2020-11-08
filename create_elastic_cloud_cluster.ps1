@@ -213,7 +213,7 @@ Write-Output "Get first enrollment key"
 $ekIDBody = (Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/fleet/enrollment-api-keys?page=1&perPage=20" -ContentType "application/json" -Headers $headers -Method GET)
 
 # Convert the the Enrollment key request body from json and extract the ID to use in the api request.
-$ekID= (convertfrom-json($ekIDBody.content))[0].list.id
+$ekID= (convertfrom-json($ekIDBody.content))[0].id
 
 # Get Body of Fleet Enrollment API Key
 Write-Output "Get Enrollment API Key"
