@@ -226,22 +226,29 @@ $fleetToken = (ConvertFrom-Json($fleetTokenBody.Content)).item.api_key
 # Retrieve configuration ID for passing into the following request
 $configId = (ConvertFrom-Json($fleetTokenBody.Content)).item.config_id
 
+$policyId = (ConvertFrom-Json($fleetTokenBody.Content)).item.policy_id
+
+# Get list of current packages for an up to date Endpoint Version
+$packageList = (convertfrom-json(Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/fleet/epm/packages" -ContentType "application/json" -Headers $headers -Method GET))
+$endpointPackageVersion = ($packageList.response | where {$_.name -eq "endpoint"}).version
+
 # Create a json request format suitable for  the configuration id 
 $securityConfigDict = @"
 {
     "name": "security",
     "description": "",
     "namespace": "default",
-    "config_id": "test",
+    "policy_id": $policyId,
     "enabled": "true",
     "output_id": "",
     "inputs": [],
     "package": {
         "name": "endpoint",
         "title": "Elastic Endpoint Security",
-        "version": "0.13.1"
+        "version": $endpointPackageVersion
     }
 }
+
 "@ | convertfrom-json
 
 $securityConfigDict.config_id = $configId
@@ -249,7 +256,7 @@ $securityConfigDict.config_id = $configId
 $securityConfigDictJson = ConvertTo-Json($securityConfigDict)
 
 Write-Output "Enable Security Integration into Default Config in Ingest Manager"
-Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/package_configs" -ContentType "application/json" -Headers $headers -Method POST -body $securityConfigDictJson
+Invoke-WebRequest -UseBasicParsing -Uri  "'https://$kibana_url/api/fleet/package_policies'" -ContentType "application/json" -Headers $headers -Method POST -body $securityConfigDictJson
 
 
 $elasticAgentUrl = "https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-$agent_version-windows-x86_64.zip"
