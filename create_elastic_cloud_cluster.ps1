@@ -215,7 +215,7 @@ $ApiKeyList = (ConvertFrom-Json(Invoke-WebRequest -UseBasicParsing -Uri  "https:
 $ApiKeyId = $ApiKeyList.list[0].id
 
 $ApiKeyActual = (ConvertFrom-Json(Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/fleet/enrollment-api-keys/$ApiKeyId" -ContentType "application/json" -Headers $headers -Method GET))
-
+$fleetToken = $ApiKeyActual.item[0].api_key
 $policyId = $ApiKeyActual.item[0].policy_id
 
 # Get list of current packages for an up to date Endpoint Version
