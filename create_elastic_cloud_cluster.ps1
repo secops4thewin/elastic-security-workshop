@@ -248,7 +248,7 @@ Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/fleet/package_
 
 
 $elasticAgentUrl = "https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-$agent_version-windows-x86_64.zip"
-$agent_install_folder = "C:\Program Files\Elastic\Agent\$agent_version\"
+$agent_install_folder = "C:\Program Files\Elastic\Agent\"
 
 if (!(Test-Path $agent_install_folder)) {
     New-Item -Path $agent_install_folder -Type directory | Out-Null
@@ -257,11 +257,12 @@ Write-Output "Downloading Elastic Agent"
 Invoke-WebRequest -Uri $elasticAgentUrl -OutFile "$install_dir\elastic-agent-$agent_version-windows-x86_64.zip"
 Write-Output "Installing Elastic Agent..."
 Write-Output "Unzipping Elastic Agent from $install_dir\elastic-agent-$agent_version-windows-x86_64.zip to $agent_install_folder"
-Expand-Archive -literalpath $install_dir\elastic-agent-$agent_version-windows-x86_64.zip -DestinationPath $agent_install_folder
+Expand-Archive -literalpath $install_dir\elastic-agent-$agent_version-windows-x86_64.zip -DestinationPath $install_dir
 
+# Rename-Item "$agent_install_folder\elastic-agent-$agent_version-windows-x86_64" "$agent_install_folder\Elastic-Agent"
 Write-Output "Running enroll process of Elastic Agent with token: $fleetToken at url: https://$kibana_url"
 #install -f --kibana-url=KIBANA_URL --enrollment-token=ENROLLMENT_KEY
-Start-Process -WorkingDirectory "$agent_install_folder\elastic-agent-$agent_version-windows-x86_64\" -FilePath "elastic-agent" -ArgumentList "install -f --kibana-url=https://$kibana_url  --enrollment-token=$fleetToken" -Wait
+Start-Process -WorkingDirectory "$install_dir\elastic-agent-$agent_version-windows-x86_64\" -FilePath "elastic-agent" -ArgumentList "install -f --kibana-url=https://$kibana_url  --enrollment-token=$fleetToken" -Wait
 
 Write-Output "Running Agent Install Process"
 # & "$agent_install_folder\elastic-agent-$agent_version-windows-x86_64\install-service-elastic-agent.ps1" -Wait
