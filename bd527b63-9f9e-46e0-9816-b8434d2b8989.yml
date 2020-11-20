@@ -1,0 +1,18 @@
+#/usr/src/app/plugins/stockpile/data/abilities/discovery/bd527b63-9f9e-46e0-9816-b8434d2b8989.yml
+- description: Obtain user from current session
+  id: bd527b63-9f9e-46e0-9816-b8434d2b8989
+  name: Current User
+  platforms:
+    darwin:
+      sh:
+        command: whoami
+    linux:
+      sh:
+        command: whoami
+    windows:
+      psh:
+        command: cmd.exe /c whoami
+  tactic: discovery
+  technique:
+    attack_id: T1033
+    name: System Owner/User Discovery
