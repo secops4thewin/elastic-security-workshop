@@ -17,7 +17,7 @@ $credentials_file_path = "C:\Users\Administrator\Desktop\cluster.txt"
 $done_file_path = "C:\Users\Administrator\Desktop\done.txt"
 $beat_config_repository_uri = "https://raw.githubusercontent.com/ElasticSA/elastic-security-workshop/v1.0"
 $wsplan_config_respository_uri = "https://raw.githubusercontent.com/secops4thewin/elastic-security-workshop/master"
-$rules_uri = "https://raw.githubusercontent.com/secops4thewin/elastic-security-workshop/master"
+$workshop_uri = "https://raw.githubusercontent.com/secops4thewin/elastic-security-workshop/master"
 $pipeline_file = "https://raw.githubusercontent.com/secops4thewin/elastic-security-workshop/master/pipelines.json"
 
 Write-Output "*** Adversary Emulation Workshop Setup ***`n"
@@ -132,6 +132,7 @@ function ElasticBeatSetup ([string]$beat_name)
 
     Write-Output "Starting $beat_name Service"
     Start-Service -Name $beat_name
+    & sc.exe failure $beat_name reset=30 actions= restart/5000
 }
 ElasticBeatSetup("winlogbeat");
 ElasticBeatSetup("packetbeat");
@@ -276,10 +277,16 @@ Write-Output "Starting Agent Service"
 }
 
 # Download Adversary Emulation Rules
-Invoke-WebRequest -Uri "$rules_uri/siem_rules/AdversaryEmulation001.ndjson" -OutFile "$install_dir\AdversaryEmulation001.ndjson"    
-Invoke-WebRequest -Uri "$rules_uri/siem_rules/AdversaryEmulation002.ndjson" -OutFile "$install_dir\AdversaryEmulation002.ndjson"    
-Invoke-WebRequest -Uri "$rules_uri/siem_rules/AdversaryEmulation003.ndjson" -OutFile "$install_dir\AdversaryEmulation003.ndjson"    
-Invoke-WebRequest -Uri "$rules_uri/siem_rules/AdversaryEmulation004.ndjson" -OutFile "$install_dir\AdversaryEmulation004.ndjson"    
+Write-Output "Downloading Caldera Implant Script"
+Invoke-WebRequest -Uri "$workshop_uri/caldera_implant.ps1" -OutFile "C:\Users\Administrator\Desktop\caldera_implant.ps1"    
+
+
+# Download Adversary Emulation Rules
+Write-Output "Downloading Workshop Rules"
+Invoke-WebRequest -Uri "$workshop_uri/siem_rules/AdversaryEmulation001.ndjson" -OutFile "$install_dir\AdversaryEmulation001.ndjson"    
+Invoke-WebRequest -Uri "$workshop_uri/siem_rules/AdversaryEmulation002.ndjson" -OutFile "$install_dir\AdversaryEmulation002.ndjson"    
+Invoke-WebRequest -Uri "$workshop_uri/siem_rules/AdversaryEmulation003.ndjson" -OutFile "$install_dir\AdversaryEmulation003.ndjson"    
+Invoke-WebRequest -Uri "$workshop_uri/siem_rules/AdversaryEmulation004.ndjson" -OutFile "$install_dir\AdversaryEmulation004.ndjson"    
 
 New-Item -Force $done_file_path | Out-Null
 Write-Output "Finished"
