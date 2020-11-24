@@ -1,0 +1,16 @@
+#!/bin/bash
+docker run -id --name caldera --hostname caldera -p 80:8888 -p 7010:7010 -p 7012:7012 -p 7011:7011 mitre/caldera
+docker run -id --name caldera --hostname caldera -p 80:8888 -p 7010:7010 -p 7012:7012 -p 7011:7011 mitre/caldera
+
+wget https://raw.githubusercontent.com/secops4thewin/elastic-security-workshop/master/caldera/agents.yml
+wget https://raw.githubusercontent.com/secops4thewin/elastic-security-workshop/master/caldera/bd527b63-9f9e-46e0-9816-b8434d2b8989.yml
+wget https://raw.githubusercontent.com/secops4thewin/elastic-security-workshop/master/caldera/5db2884b6ca3ab932848f295a3896dc0.yml
+wget https://raw.githubusercontent.com/secops4thewin/elastic-security-workshop/master/caldera/1d3d2e634f1bc294f04ce84944b30de9.yml
+
+docker cp ./agents.yml caldera:/usr/src/app/conf/agents.yml
+docker cp ./bd527b63-9f9e-46e0-9816-b8434d2b8989.yml caldera:/usr/src/app/plugins/stockpile/data/abilities/discovery/bd527b63-9f9e-46e0-9816-b8434d2b8989.yml
+docker cp ./5db2884b6ca3ab932848f295a3896dc0.yml caldera:/usr/src/app/plugins/atomic/data/abilities/multiple/5db2884b6ca3ab932848f295a3896dc0.yml
+docker cp ./1d3d2e634f1bc294f04ce84944b30de9.yml caldera:/usr/src/app/plugins/atomic/data/abilities/persistence/1d3d2e634f1bc294f04ce84944b30de9.yml
+docker restart caldera
+sleep 2m
+docker restart caldera

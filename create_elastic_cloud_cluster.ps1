@@ -17,6 +17,7 @@ $credentials_file_path = "C:\Users\Administrator\Desktop\cluster.txt"
 $done_file_path = "C:\Users\Administrator\Desktop\done.txt"
 $beat_config_repository_uri = "https://raw.githubusercontent.com/ElasticSA/elastic-security-workshop/v1.0"
 $wsplan_config_respository_uri = "https://raw.githubusercontent.com/secops4thewin/elastic-security-workshop/master"
+$rules_uri = "https://raw.githubusercontent.com/secops4thewin/elastic-security-workshop/master"
 $pipeline_file = "https://raw.githubusercontent.com/secops4thewin/elastic-security-workshop/master/pipelines.json"
 
 Write-Output "*** Adversary Emulation Workshop Setup ***`n"
@@ -273,6 +274,12 @@ Write-Output "Starting Agent Service"
 
     start-service "elastic-agent"
 }
+
+# Download Adversary Emulation Rules
+Invoke-WebRequest -Uri "$rules_uri/siem_rules/AdversaryEmulation001.ndjson" -OutFile "$install_dir\AdversaryEmulation001.ndjson"    
+Invoke-WebRequest -Uri "$rules_uri/siem_rules/AdversaryEmulation002.ndjson" -OutFile "$install_dir\AdversaryEmulation002.ndjson"    
+Invoke-WebRequest -Uri "$rules_uri/siem_rules/AdversaryEmulation003.ndjson" -OutFile "$install_dir\AdversaryEmulation003.ndjson"    
+Invoke-WebRequest -Uri "$rules_uri/siem_rules/AdversaryEmulation004.ndjson" -OutFile "$install_dir\AdversaryEmulation004.ndjson"    
 
 New-Item -Force $done_file_path | Out-Null
 Write-Output "Finished"
