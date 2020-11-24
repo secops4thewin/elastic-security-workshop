@@ -1,0 +1,23 @@
+bootstrap_abilities:
+- 43b3754c-def4-4699-a673-1d85648fda6a
+- bd527b63-9f9e-46e0-9816-b8434d2b8989
+- 2dece965-37a0-4f70-a391-0f30e3331aba
+- 5db2884b6ca3ab932848f295a3896dc0
+- 1d3d2e634f1bc294f04ce84944b30de9
+- 90c2efaa-8205-480d-8bb6-61d90dbaf81b
+- 316251ed-6a28-4013-812b-ddf5b5b007f8
+- b007fe0c-c6b0-4fda-915c-255bbc070de2
+- 6469befa-748a-4b9c-a96d-f191fde47d89
+- 4e97e699-93d7-4040-b5a3-2e906a58199e
+- 300157e5-f4ad-4569-b533-9d1fa0e74d74
+- ea713bc4-63f0-491c-9a6f-0b01d560b87e
+- 1b4fb81c-8090-426c-93ab-0a633e7a16a7
+implant_name: doc
+sleep_max: 60
+sleep_min: 30
+untrusted_timer: 90
+watchdog: 0
+deployments:
+  - 2f34977d-9558-4c12-abad-349716777c6b #54ndc47
+  - 356d1722-7784-40c4-822b-0cf864b0b36d #Manx
+  - 0ab383be-b819-41bf-91b9-1bd4404d83bf #Ragdoll
