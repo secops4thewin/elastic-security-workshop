@@ -289,26 +289,16 @@ Invoke-WebRequest -Uri "$workshop_uri/siem_rules/AdversaryEmulation004.ndjson" -
 
 # Enable Siem Signal Rules
 Write-Output "Enabling SIEM Rules"
-Invoke-RestMethod "https://$kibana_url/api/detection_engine/rules/prepackaged" -Method 'PUT' -Headers $headers -Body $body
+Invoke-RestMethod "https://$kibana_url/api/detection_engine/prepackaged" -Method 'PUT' -Headers $headers
 
 # Upload each rule to Elastic
 $ruleList = @("$install_dir\AdversaryEmulation001.ndjson", "$install_dir\AdversaryEmulation002.ndjson", "$install_dir\AdversaryEmulation003.ndjson", "$install_dir\AdversaryEmulation004.ndjson")
 foreach ($rule in $ruleList)
 {
 Write-Output "Adding Rule $rule"
-$multipartContent = [System.Net.Http.MultipartFormDataContent]::new()
-$multipartFile = $rule
-$FileStream = [System.IO.FileStream]::new($multipartFile, [System.IO.FileMode]::Open)
-$fileHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
-$fileHeader.Name = "file"
-$fileHeader.FileName = "AdversaryEmulation001.ndjson"
-$fileContent = [System.Net.Http.StreamContent]::new($FileStream)
-$fileContent.Headers.ContentDisposition = $fileHeader
-$multipartContent.Add($fileContent)
+Invoke-RestMethod "https://$kibana_url/api/detection_engine/rules/_import" -Method 'POST' -Headers $headers -infile $rule -ContentType "multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW"  
 
-$body = $multipartContent
 
-$response = Invoke-RestMethod "https://$kibana_url/api/detection_engine/rules/_import" -Method 'POST' -Headers $headers -Body $body
 }
 
 New-Item -Force $done_file_path | Out-Null
