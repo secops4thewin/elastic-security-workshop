@@ -286,20 +286,17 @@ Invoke-WebRequest -Uri "$workshop_uri/siem_rules/AdversaryEmulation001.ndjson" -
 Invoke-WebRequest -Uri "$workshop_uri/siem_rules/AdversaryEmulation002.ndjson" -OutFile "$install_dir\AdversaryEmulation002.ndjson"
 Invoke-WebRequest -Uri "$workshop_uri/siem_rules/AdversaryEmulation003.ndjson" -OutFile "$install_dir\AdversaryEmulation003.ndjson"
 Invoke-WebRequest -Uri "$workshop_uri/siem_rules/AdversaryEmulation004.ndjson" -OutFile "$install_dir\AdversaryEmulation004.ndjson"
+Invoke-WebRequest -Uri "$workshop_uri/siem_rules/upload_rules.ps1" -OutFile "C:\Users\Administrator\Desktop\upload_rules.ps1"
 
-# Enable Siem Signal Rules
-Write-Output "Enabling SIEM Rules"
-Invoke-RestMethod "https://$kibana_url/api/detection_engine/prepackaged" -Method 'PUT' -Headers $headers
+# Add Kibana URL To Top of Upload Rules File
+Write-Output "Adding credentials to file for upload_rules"
+$content = get-content "C:\Users\Administrator\Desktop\upload_rules.ps1"
+$outputNew = @()
+$outputNew += '$password = ' + "$password"
+$outputNew += '$kibana_url = ' + "$kibana_url"
+$outputNew += $content
+$outputNew | out-file "C:\Users\Administrator\Desktop\upload_rules.ps1"
 
-# Upload each rule to Elastic
-$ruleList = @("$install_dir\AdversaryEmulation001.ndjson", "$install_dir\AdversaryEmulation002.ndjson", "$install_dir\AdversaryEmulation003.ndjson", "$install_dir\AdversaryEmulation004.ndjson")
-foreach ($rule in $ruleList)
-{
-Write-Output "Adding Rule $rule"
-Invoke-RestMethod "https://$kibana_url/api/detection_engine/rules/_import" -Method 'POST' -Headers $headers -infile $rule -ContentType "multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW"  
-
-
-}
 
 New-Item -Force $done_file_path | Out-Null
 Write-Output "Finished"
