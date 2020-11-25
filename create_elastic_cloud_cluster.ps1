@@ -292,7 +292,7 @@ Write-Output "Enabling SIEM Rules"
 Invoke-RestMethod "https://$kibana_url/api/detection_engine/rules/prepackaged" -Method 'PUT' -Headers $headers -Body $body
 
 # Upload each rule to Elastic
-$ruleList = @("$install_dir\AdversaryEmulation001.ndjson", "$install_dir\AdversaryEmulation002.ndjson", "$install_dir\AdversaryEmulation003.ndjson", "$install_dir\AdversaryEmulation004.ndjson")io'k'k'lo'oLK?Ol/lolo;
+$ruleList = @("$install_dir\AdversaryEmulation001.ndjson", "$install_dir\AdversaryEmulation002.ndjson", "$install_dir\AdversaryEmulation003.ndjson", "$install_dir\AdversaryEmulation004.ndjson")
 foreach ($rule in $ruleList)
 {
 Write-Output "Adding Rule $rule"
