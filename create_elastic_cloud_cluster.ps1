@@ -291,7 +291,7 @@ Invoke-WebRequest -Uri "$workshop_uri/siem_rules/AdversaryEmulation004.ndjson" -
 Invoke-RestMethod "https://$kibana_url/api/detection_engine/rules/prepackaged" -Method 'PUT' -Headers $esHeaders -Body $body
 
 # Upload each rule to Elastic
-$ruleList = ["$install_dir\AdversaryEmulation001.ndjson", "$install_dir\AdversaryEmulation002.ndjson", "$install_dir\AdversaryEmulation003.ndjson", "$install_dir\AdversaryEmulation004.ndjson"]
+$ruleList = @("$install_dir\AdversaryEmulation001.ndjson", "$install_dir\AdversaryEmulation002.ndjson", "$install_dir\AdversaryEmulation003.ndjson", "$install_dir\AdversaryEmulation004.ndjson")
 foreach ($rule in $ruleList)
 {
 Write-Output "Adding Rule $rule"
