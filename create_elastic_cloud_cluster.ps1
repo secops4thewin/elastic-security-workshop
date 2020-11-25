@@ -280,24 +280,6 @@ start-service "elastic-agent"
 Write-Output "Downloading Caldera Implant Script"
 Invoke-WebRequest -Uri "$workshop_uri/caldera_implant.ps1" -OutFile "C:\Users\Administrator\Desktop\caldera_implant.ps1"
 
-# Download Adversary Emulation Rules
-Write-Output "Downloading Workshop Rules"
-Invoke-WebRequest -Uri "$workshop_uri/siem_rules/AdversaryEmulation001.ndjson" -OutFile "$install_dir\AdversaryEmulation001.ndjson"
-Invoke-WebRequest -Uri "$workshop_uri/siem_rules/AdversaryEmulation002.ndjson" -OutFile "$install_dir\AdversaryEmulation002.ndjson"
-Invoke-WebRequest -Uri "$workshop_uri/siem_rules/AdversaryEmulation003.ndjson" -OutFile "$install_dir\AdversaryEmulation003.ndjson"
-Invoke-WebRequest -Uri "$workshop_uri/siem_rules/AdversaryEmulation004.ndjson" -OutFile "$install_dir\AdversaryEmulation004.ndjson"
-Invoke-WebRequest -Uri "$workshop_uri/siem_rules/upload_rules.ps1" -OutFile "C:\Users\Administrator\Desktop\upload_rules.ps1"
-
-# Add Kibana URL To Top of Upload Rules File
-Write-Output "Adding credentials to file for upload_rules"
-$content = get-content "C:\Users\Administrator\Desktop\upload_rules.ps1"
-$outputNew = @()
-$outputNew += '$password = "' + "$password" + '"'
-$outputNew += '$kibana_url = "' + "$kibana_url" + '"'
-$outputNew += $content
-$outputNew | out-file "C:\Users\Administrator\Desktop\upload_rules.ps1"
-
-
 New-Item -Force $done_file_path | Out-Null
 Write-Output "Finished"
 
