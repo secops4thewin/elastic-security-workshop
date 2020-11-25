@@ -132,7 +132,7 @@ function ElasticBeatSetup ([string]$beat_name)
 
     Write-Output "Starting $beat_name Service"
     Start-Service -Name $beat_name
-    & sc.exe failure $beat_name reset=30 actions= restart/5000
+    & sc.exe failure $beat_name reset=30 actions=restart/5000
 }
 ElasticBeatSetup("winlogbeat");
 ElasticBeatSetup("packetbeat");
@@ -276,10 +276,9 @@ Write-Output "Starting Agent Service"
     start-service "elastic-agent"
 }
 
-# Download Adversary Emulation Rules
+# Download Caldera Implant
 Write-Output "Downloading Caldera Implant Script"
-Invoke-WebRequest -Uri "$workshop_uri/caldera_implant.ps1" -OutFile "C:\Users\Administrator\Desktop\caldera_implant.ps1"    
-
+Invoke-WebRequest -Uri "$workshop_uri/caldera_implant.ps1" -OutFile "C:\Users\Administrator\Desktop\caldera_implant.ps1"
 
 # Download Adversary Emulation Rules
 Write-Output "Downloading Workshop Rules"
@@ -287,6 +286,29 @@ Invoke-WebRequest -Uri "$workshop_uri/siem_rules/AdversaryEmulation001.ndjson" -
 Invoke-WebRequest -Uri "$workshop_uri/siem_rules/AdversaryEmulation002.ndjson" -OutFile "$install_dir\AdversaryEmulation002.ndjson"    
 Invoke-WebRequest -Uri "$workshop_uri/siem_rules/AdversaryEmulation003.ndjson" -OutFile "$install_dir\AdversaryEmulation003.ndjson"    
 Invoke-WebRequest -Uri "$workshop_uri/siem_rules/AdversaryEmulation004.ndjson" -OutFile "$install_dir\AdversaryEmulation004.ndjson"    
+
+# Enable Siem Signal Rules
+Invoke-RestMethod "https://$kibana_url/api/detection_engine/rules/prepackaged" -Method 'PUT' -Headers $esHeaders -Body $body
+
+# Upload each rule to Elastic
+$ruleList = ["$install_dir\AdversaryEmulation001.ndjson", "$install_dir\AdversaryEmulation002.ndjson", "$install_dir\AdversaryEmulation003.ndjson", "$install_dir\AdversaryEmulation004.ndjson"]
+foreach ($rule in $ruleList)
+{
+Write-Output "Adding Rule $rule"
+$multipartContent = [System.Net.Http.MultipartFormDataContent]::new()
+$multipartFile = $rule
+$FileStream = [System.IO.FileStream]::new($multipartFile, [System.IO.FileMode]::Open)
+$fileHeader = [System.Net.Http.Headers.ContentDispositionHeaderValue]::new("form-data")
+$fileHeader.Name = "file"
+$fileHeader.FileName = "AdversaryEmulation001.ndjson"
+$fileContent = [System.Net.Http.StreamContent]::new($FileStream)
+$fileContent.Headers.ContentDisposition = $fileHeader
+$multipartContent.Add($fileContent)
+
+$body = $multipartContent
+
+$response = Invoke-RestMethod "https://$kibana_url/api/detection_engine/rules/_import" -Method 'POST' -Headers $esHeaders -Body $body
+}
 
 New-Item -Force $done_file_path | Out-Null
 Write-Output "Finished"
