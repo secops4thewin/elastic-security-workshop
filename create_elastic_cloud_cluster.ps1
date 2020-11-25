@@ -292,8 +292,8 @@ Invoke-WebRequest -Uri "$workshop_uri/siem_rules/upload_rules.ps1" -OutFile "C:\
 Write-Output "Adding credentials to file for upload_rules"
 $content = get-content "C:\Users\Administrator\Desktop\upload_rules.ps1"
 $outputNew = @()
-$outputNew += '$password = ' + "$password"
-$outputNew += '$kibana_url = ' + "$kibana_url"
+$outputNew += '$password = "' + "$password" + '"'
+$outputNew += '$kibana_url = "' + "$kibana_url" + '"'
 $outputNew += $content
 $outputNew | out-file "C:\Users\Administrator\Desktop\upload_rules.ps1"
 

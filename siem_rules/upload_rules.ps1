@@ -1,3 +1,4 @@
+
 $install_dir = "C:\Elastic"
 # Build authentication information for later requests
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -17,5 +18,9 @@ $ruleList = @("$install_dir\AdversaryEmulation001.ndjson", "$install_dir\Adversa
 foreach ($rule in $ruleList)
 {
 Write-Output "Adding Rule $rule"
-Invoke-RestMethod "https://$kibana_url/api/detection_engine/rules/_import" -Method 'POST' -Headers $headers -infile $rule -ContentType "multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW"  
+$jsonParse = get-content -raw $rule | convertfrom-json
+$newObj = $jsonParse | select-object -property * -excludeproperty created_at, created_by, updated_at, immutable, meta, output_index
+$bodyRequest = $jsonParse | ConvertTo-Json -Depth 32
+
+Invoke-RestMethod "https://$kibana_url/api/detection_engine/rules" -Method 'POST' -Headers $headers -body $bodyRequest
 }
