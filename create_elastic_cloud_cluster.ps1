@@ -288,10 +288,11 @@ Invoke-WebRequest -Uri "$workshop_uri/siem_rules/AdversaryEmulation003.ndjson" -
 Invoke-WebRequest -Uri "$workshop_uri/siem_rules/AdversaryEmulation004.ndjson" -OutFile "$install_dir\AdversaryEmulation004.ndjson"    
 
 # Enable Siem Signal Rules
-Invoke-RestMethod "https://$kibana_url/api/detection_engine/rules/prepackaged" -Method 'PUT' -Headers $esHeaders -Body $body
+Write-Output "Enabling SIEM Rules"
+Invoke-RestMethod "https://$kibana_url/api/detection_engine/rules/prepackaged" -Method 'PUT' -Headers $headers -Body $body
 
 # Upload each rule to Elastic
-$ruleList = @("$install_dir\AdversaryEmulation001.ndjson", "$install_dir\AdversaryEmulation002.ndjson", "$install_dir\AdversaryEmulation003.ndjson", "$install_dir\AdversaryEmulation004.ndjson")
+$ruleList = @("$install_dir\AdversaryEmulation001.ndjson", "$install_dir\AdversaryEmulation002.ndjson", "$install_dir\AdversaryEmulation003.ndjson", "$install_dir\AdversaryEmulation004.ndjson")io'k'k'lo'oLK?Ol/lolo;
 foreach ($rule in $ruleList)
 {
 Write-Output "Adding Rule $rule"
@@ -307,7 +308,7 @@ $multipartContent.Add($fileContent)
 
 $body = $multipartContent
 
-$response = Invoke-RestMethod "https://$kibana_url/api/detection_engine/rules/_import" -Method 'POST' -Headers $esHeaders -Body $body
+$response = Invoke-RestMethod "https://$kibana_url/api/detection_engine/rules/_import" -Method 'POST' -Headers $headers -Body $body
 }
 
 New-Item -Force $done_file_path | Out-Null
