@@ -302,7 +302,7 @@ Start-Sleep -Seconds 60
 
 $AgentCounter++
 }
-until (($agentStatusResponse.status -eq 200) -or ($AgentCounter -eq 5) )
+until (($agentStatusResponse.statuscode -eq 200) -or ($AgentCounter -eq 5) )
 
 New-Item -Force $done_file_path | Out-Null
 Write-Output "Finished"
