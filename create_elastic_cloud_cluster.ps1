@@ -269,7 +269,8 @@ Start-Process -WorkingDirectory "$install_dir\elastic-agent-$agent_version-windo
 Write-Output "Running Agent Install Process"
 # & "$agent_install_folder\elastic-agent-$agent_version-windows-x86_64\install-service-elastic-agent.ps1" -Wait
 
-if ((get-service "elastic-agent") -eq "Stopped")
+# If the Elastic Agent 
+if ((get-service "Elastic Agent") -eq "Stopped")
 {
 Write-Output "Starting Agent Service"
 
@@ -279,6 +280,29 @@ start-service "elastic-agent"
 # Download Caldera Implant
 Write-Output "Downloading Caldera Implant Script"
 Invoke-WebRequest -Uri "$workshop_uri/caldera_implant.ps1" -OutFile "C:\Users\Administrator\Desktop\caldera_implant.ps1"
+
+# Checking to see if Policy was successfull in deploying.  If not, restarting the Endpoint Agent
+$agentStatusResponse = (ConvertFrom-Json(Invoke-WebRequest -UseBasicParsing -Uri  "https://$kibana_url/api/fleet/agents" -ContentType "application/json" -Headers $headers -Method GET))
+$agentHostId = $agentStatusResponse.list.local_metadata.host.id
+$agentPolicyStatus =  "https://$kibana_url/api/endpoint/policy_response?hostId=$agentHostId"
+
+# Adding counter 
+$AgentCounter = 0
+do {
+
+try{
+Write-Output "Trying $AgentCounter times to fix policy of agent"
+$agentStatusResponse = Invoke-WebRequest -UseBasicParsing -Uri  "$agentPolicyStatus" -ContentType "application/json" -Headers $headers -Method GET
+}
+catch{
+Write-output "Error Message Array: $searchError"
+Restart-Service "Elastic Endpoint" -Force
+Start-Sleep -Seconds 60
+}
+
+$AgentCounter++
+}
+until (($agentStatusResponse.status -eq 200) -or ($AgentCounter -eq 5) )
 
 New-Item -Force $done_file_path | Out-Null
 Write-Output "Finished"
