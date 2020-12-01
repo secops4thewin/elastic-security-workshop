@@ -292,7 +292,7 @@ do {
 
 try{
 Write-Output "Trying $AgentCounter times to fix policy of agent"
-$agentStatusResponse = Invoke-WebRequest -UseBasicParsing -Uri  "$agentPolicyStatus" -ContentType "application/json" -Headers $headers -Method GET
+$agentStatusResponse = Invoke-WebRequest -UseBasicParsing -Uri  $agentPolicyStatus -ContentType "application/json" -Headers $headers -Method GET
 }
 catch{
 Write-output "Error Message Array: $searchError"
